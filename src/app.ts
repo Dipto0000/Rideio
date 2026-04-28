@@ -1,12 +1,12 @@
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import routes from './app/routes/index.js';
 import env from './app/config/env.js';
-import { globalErrorHandler } from './app/middlewares/globalErrorHandler.middleware.js';
-import { AppError } from './app/utils/error.utils.js';
-import { sendResponse } from './app/utils/response.utils.js';
 import { StatusCodes } from 'http-status-codes';
+import routes from './app/routes/index.js';
+import { globalErrorHandler } from './app/middlewares/globalErrorHandler.js';
+import notFound from './app/middlewares/notFound.js';
+import { sendResponse } from './app/utils/sendResponse.js';
 
 const app = express();
 
@@ -34,9 +34,7 @@ app.get('/health', (_req, res) => {
 app.use('/api/v1', routes);
 
 // 404 handler — must be before globalErrorHandler
-app.use((_req, _res, next) => {
-  next(new AppError(StatusCodes.NOT_FOUND, 'Route not found'));
-});
+app.use(notFound)
 
 // Global error handler — must be last
 app.use(globalErrorHandler);

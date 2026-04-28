@@ -1,4 +1,5 @@
-import { Response, Request, NextFunction, RequestHandler } from 'express';
+import { Response } from 'express';
+import { TErrorSources } from '../interfaces/error.types.js';
 
 export interface IApiResponse<T = unknown> {
   statusCode: number;
@@ -6,6 +7,7 @@ export interface IApiResponse<T = unknown> {
   message: string;
   data?: T;
   meta?: Record<string, unknown>;
+  errorSources?: TErrorSources[];
 }
 
 export const sendResponse = <T = unknown>(
@@ -17,19 +19,6 @@ export const sendResponse = <T = unknown>(
     message: options.message,
     ...(options.data !== undefined && { data: options.data }),
     ...(options.meta !== undefined && { meta: options.meta }),
+    ...(options.errorSources !== undefined && { errorSources: options.errorSources }),
   });
-};
-
-export type AsyncFunction<T = unknown> = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => Promise<T>;
-
-export const catchAsync = <T = unknown>(
-  fn: AsyncFunction<T>
-): RequestHandler => {
-  return (req, res, next) => {
-    fn(req, res, next).catch(next);
-  };
 };
