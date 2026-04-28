@@ -2,11 +2,12 @@ import { Request, Response, NextFunction } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { verifyToken } from '../utils/jwt.utils.js';
 import { AppError } from '../utils/error.utils.js';
+import { Role } from '../modules/auth/auth.interface.js';
 
 export interface IAuthUser {
   userId: string;
   email: string;
-  role: string;
+  role: Role;
 }
 
 // Extend Express Request type
@@ -18,16 +19,33 @@ declare global {
   }
 }
 
-export const checkAuth = (...allowedRoles: string[]) => {
+/**
+ * checkAuth middleware - Next.js compatible
+ * Reads token from:
+ * 1. Authorization header: "Bearer <token>"
+ * 2. Cookie: "accessToken"
+ * 3. Cookie: "refreshToken" (for refresh endpoint)
+ */
+export const checkAuth = (...allowedRoles: Role[]) => {
   return (req: Request, _res: Response, next: NextFunction): void => {
     try {
-      const authHeader = req.headers.authorization;
+      let token: string | undefined;
 
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        throw new AppError(StatusCodes.UNAUTHORIZED, 'No token provided');
+      // 1. Try Authorization header first
+      const authHeader = req.headers.authorization;
+      if (authHeader?.startsWith('Bearer ')) {
+        token = authHeader.split(' ')[1];
       }
 
-      const token = authHeader.split(' ')[1];
+      // 2. Try accessToken cookie
+      if (!token) {
+        token = req.cookies?.accessToken as string | undefined;
+      }
+
+      // 3. Try refreshToken cookie (for token refresh)
+      if (!token) {
+        token = req.cookies?.refreshToken as string | undefined;
+      }
 
       if (!token) {
         throw new AppError(StatusCodes.UNAUTHORIZED, 'No token provided');

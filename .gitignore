@@ -1,6 +1,4 @@
 node_modules/
 dist/
 .env
-knowledge.md
-.agents/
-handover.md
+AGENTS.md
