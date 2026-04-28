@@ -1,23 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import { verifyToken } from '../utils/jwt.utils.js';
-import { AppError } from '../utils/error.utils.js';
-import { Role } from '../modules/auth/auth.interface.js';
-
-export interface IAuthUser {
-  userId: string;
-  email: string;
-  role: Role;
-}
-
-// Extend Express Request type
-declare global {
-  namespace Express {
-    interface Request {
-      user?: IAuthUser;
-    }
-  }
-}
+import { verifyToken } from '../utils/jwt.js';
+import AppError from '../errorHelpers/AppError.js';
+import { IAuthUser, Role } from '../interfaces/index.js';
 
 /**
  * checkAuth middleware - Next.js compatible
@@ -51,18 +36,18 @@ export const checkAuth = (...allowedRoles: Role[]) => {
         throw new AppError(StatusCodes.UNAUTHORIZED, 'No token provided');
       }
 
-      const decoded = verifyToken<IAuthUser>(token, process.env.JWT_SECRET!);
+      const decoded = verifyToken(token, process.env.JWT_SECRET!);
 
-      if (!decoded) {
+      if (!decoded || typeof decoded === 'string') {
         throw new AppError(StatusCodes.UNAUTHORIZED, 'Invalid token');
       }
 
       // Check role authorization
-      if (allowedRoles.length > 0 && !allowedRoles.includes(decoded.role)) {
+      if (allowedRoles.length > 0 && !allowedRoles.includes(decoded.role as Role)) {
         throw new AppError(StatusCodes.FORBIDDEN, 'You are not authorized to access this resource');
       }
 
-      req.user = decoded;
+      req.user = decoded as IAuthUser;
       next();
     } catch (error) {
       next(error);
