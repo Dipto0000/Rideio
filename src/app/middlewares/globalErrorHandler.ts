@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextFunction, Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import { AppError } from '../utils/error.utils.js';
+import AppError from '../errorHelpers/AppError.js';
 import { sendResponse } from '../utils/sendResponse.js';
 import { handleCastError } from '../helpers/handleCastError.js';
 import { handleDuplicateError } from '../helpers/handleDuplicateError.js';
