@@ -2,7 +2,12 @@ import { Request, Response, NextFunction } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { verifyToken } from '../utils/jwt.js';
 import AppError from '../errorHelpers/AppError.js';
-import { IAuthUser, Role } from '../interfaces/index.js';
+
+export enum Role {
+  RIDER = 'Rider',
+  DRIVER = 'Driver',
+  ADMIN = 'Admin',
+}
 
 /**
  * checkAuth middleware - Next.js compatible
@@ -47,7 +52,7 @@ export const checkAuth = (...allowedRoles: Role[]) => {
         throw new AppError(StatusCodes.FORBIDDEN, 'You are not authorized to access this resource');
       }
 
-      req.user = decoded as IAuthUser;
+      req.user = decoded;
       next();
     } catch (error) {
       next(error);
