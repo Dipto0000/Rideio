@@ -1,6 +1,6 @@
 import { StatusCodes } from 'http-status-codes';
 import { JwtPayload } from 'jsonwebtoken';
-import env from '../config/env.js';
+import { envVars } from '../config/env.js';
 import AppError from '../errorHelpers/AppError.js';
 import { generateToken, verifyToken } from './jwt.js';
 
@@ -22,14 +22,14 @@ export const createUserTokens = (
 
   const accessToken = generateToken(
     jwtPayload,
-    env.JWT_SECRET,
-    env.JWT_EXPIRY
+    envVars.JWT_ACCESS_SECRET,
+    envVars.JWT_ACCESS_EXPIRES
   );
 
   const refreshToken = generateToken(
     jwtPayload,
-    env.REFRESH_SECRET,
-    env.REFRESH_EXPIRY
+    envVars.JWT_REFRESH_SECRET,
+    envVars.JWT_REFRESH_EXPIRES
   );
 
   return {
@@ -43,7 +43,7 @@ export const createNewAccessTokenWithRefreshToken = async (
 ): Promise<string> => {
   const verifiedRefreshToken = verifyToken(
     refreshToken,
-    env.REFRESH_SECRET
+    envVars.JWT_REFRESH_SECRET
   ) as JwtPayload;
 
   if (!verifiedRefreshToken) {
@@ -52,8 +52,8 @@ export const createNewAccessTokenWithRefreshToken = async (
 
   const accessToken = generateToken(
     verifiedRefreshToken,
-    env.JWT_SECRET,
-    env.JWT_EXPIRY
+    envVars.JWT_ACCESS_SECRET,
+    envVars.JWT_ACCESS_EXPIRES
   );
 
   return accessToken;

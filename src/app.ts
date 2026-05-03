@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import env from './app/config/env.js';
+import { envVars } from './app/config/env.js';
 import { StatusCodes } from 'http-status-codes';
 import routes from './app/routes/index.js';
 import { globalErrorHandler } from './app/middlewares/globalErrorHandler.js';
@@ -12,7 +12,7 @@ const app = express();
 
 // Global middleware
 app.use(cors({
-  origin: env.FRONTEND_URL,
+  origin: envVars.FRONTEND_URL,
   credentials: true,
 }));
 

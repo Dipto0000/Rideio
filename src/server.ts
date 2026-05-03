@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import app from './app.js';
-import env from './app/config/env.js';
+import { envVars } from './app/config/env.js';
 
 const SHUTDOWN_TIMEOUT = 10_000; // 10 seconds
 let server: ReturnType<typeof app.listen> | null = null;
@@ -34,7 +34,7 @@ const gracefulShutdown = (signal: string) => {
 
 const connectDatabase = async () => {
   try {
-    await mongoose.connect(env.MONGO_URI);
+    await mongoose.connect(envVars.DB_URL);
     console.log(`✅ MongoDB connected: ${mongoose.connection.host}`);
   } catch (error) {
     console.error('❌ MongoDB connection failed:', error);
@@ -45,8 +45,8 @@ const connectDatabase = async () => {
 const startServer = async () => {
   await connectDatabase();
 
-  server = app.listen(env.PORT, () => {
-    console.log(` 🚀 Server is running on port ${env.PORT} in ${env.NODE_ENV} mode`);
+server = app.listen(envVars.PORT, () => {
+    console.log(`🚀 Server is running on port ${envVars.PORT} in ${envVars.NODE_ENV} mode`);
   });
 };
 

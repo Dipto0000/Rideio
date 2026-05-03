@@ -1,38 +1,42 @@
-import dotenv from 'dotenv';
-import { z } from 'zod';
+import dotenv from "dotenv";
 
 dotenv.config();
 
-const envSchema = z.object({
-  PORT: z.coerce.number().default(5000),
-  MONGO_URI: z.string().min(1, 'MONGO_URI is required'),
-  NODE_ENV: z
-    .enum(['development', 'production', 'test'])
-    .default('development'),
+interface EnvConfig {
+    PORT: string;
+    DB_URL: string;
+    NODE_ENV: "development" | "production";
+    BCRYPT_SALT_ROUND: string;
+    JWT_ACCESS_SECRET: string;
+    JWT_ACCESS_EXPIRES: string;
+    JWT_REFRESH_SECRET: string;
+    JWT_REFRESH_EXPIRES: string;
+    FRONTEND_URL: string;
+}
 
-  // JWT
-  JWT_SECRET: z.string().min(1, 'JWT_SECRET is required'),
-  JWT_EXPIRY: z.string().default('15m'),
-  REFRESH_SECRET: z.string().min(1, 'REFRESH_SECRET is required'),
-  REFRESH_EXPIRY: z.string().default('7d'),
+const loadEnvVariables = (): EnvConfig => {
+    const requiredEnvVariables: string[] = [
+        "PORT", "DB_URL", "NODE_ENV", "BCRYPT_SALT_ROUND",
+        "JWT_ACCESS_EXPIRES", "JWT_ACCESS_SECRET", "JWT_REFRESH_SECRET", "JWT_REFRESH_EXPIRES", "FRONTEND_URL"
+    ];
 
-  // Security
-  BCRYPT_SALT_ROUNDS: z.coerce.number().default(10),
+    requiredEnvVariables.forEach(key => {
+        if (!process.env[key]) {
+            throw new Error(`Missing required environment variable ${key}`);
+        }
+    });
 
-  // CORS & URLs
-  FRONTEND_URL: z.string().default('http://localhost:5173'),
-});
+    return {
+        PORT: process.env.PORT as string,
+        DB_URL: process.env.DB_URL!,
+        NODE_ENV: process.env.NODE_ENV as "development" | "production",
+        BCRYPT_SALT_ROUND: process.env.BCRYPT_SALT_ROUND as string,
+        JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET as string,
+        JWT_ACCESS_EXPIRES: process.env.JWT_ACCESS_EXPIRES as string,
+        JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET as string,
+        JWT_REFRESH_EXPIRES: process.env.JWT_REFRESH_EXPIRES as string,
+        FRONTEND_URL: process.env.FRONTEND_URL as string,
+    };
+}
 
-const env = envSchema.parse({
-  PORT: process.env.PORT,
-  MONGO_URI: process.env.MONGO_URI,
-  NODE_ENV: process.env.NODE_ENV,
-  JWT_SECRET: process.env.JWT_SECRET,
-  JWT_EXPIRY: process.env.JWT_EXPIRY,
-  REFRESH_SECRET: process.env.REFRESH_SECRET,
-  REFRESH_EXPIRY: process.env.REFRESH_EXPIRY,
-  BCRYPT_SALT_ROUNDS: process.env.BCRYPT_SALT_ROUNDS,
-  FRONTEND_URL: process.env.FRONTEND_URL,
-});
-
-export default env;
+export const envVars = loadEnvVariables();

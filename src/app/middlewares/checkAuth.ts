@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { verifyToken } from '../utils/jwt.js';
 import AppError from '../errorHelpers/AppError.js';
+import { envVars } from '../config/env.js';
 
 export enum Role {
   RIDER = 'Rider',
@@ -41,7 +42,7 @@ export const checkAuth = (...allowedRoles: Role[]) => {
         throw new AppError(StatusCodes.UNAUTHORIZED, 'No token provided');
       }
 
-      const decoded = verifyToken(token, process.env.JWT_SECRET!);
+      const decoded = verifyToken(token, envVars.JWT_ACCESS_SECRET);
 
       if (!decoded || typeof decoded === 'string') {
         throw new AppError(StatusCodes.UNAUTHORIZED, 'Invalid token');
