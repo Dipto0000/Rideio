@@ -1,15 +1,16 @@
 import httpStatus from "http-status-codes";
 import bcryptjs from 'bcryptjs';
-import { JwtPayload } from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
 import { envVars } from "../../config/env.js";
 import AppError from "../../errorHelpers/AppError.js";
 import { QueryBuilder } from "../../utils/QueryBuilder.js";
+import { sendEmail } from "../../utils/sendEmail.js";
 import { userSearchableFields } from "./user.constant.js";
 import { IAuthProvider, IUser, Role, SubRole } from "./user.interface.js";
 import { User } from "./user.model.js";
 
 const createUser = async (payload: Partial<IUser>) => {
-    const { email, password, ...rest } = payload;
+    const { email, password, name, ...rest } = payload;
 
     const isUserExist = await User.findOne({ email });
 
@@ -32,8 +33,32 @@ const createUser = async (payload: Partial<IUser>) => {
         email,
         password: hashedPassword,
         auths: [authProvider],
+        name: name as string,
         ...rest,
     });
+
+    // Generate email verification token
+    const verificationToken = jwt.sign(
+        { userId: user._id, email: user.email },
+        envVars.JWT_ACCESS_SECRET,
+        { expiresIn: "10m" }
+    );
+
+    user.verificationToken = verificationToken;
+    user.verificationTokenExpiry = new Date(Date.now() + 10 * 60 * 1000);
+    await user.save();
+
+    // Send confirmation email
+    const confirmLink = `${envVars.FRONTEND_URL}/verify-email?token=${verificationToken}`;
+    sendEmail({
+        to: user.email,
+        subject: "Confirm Your Email - Rideio",
+        templateName: "confirmEmail",
+        templateData: {
+            name: user.name,
+            confirmLink,
+        },
+    }).catch(err => console.error("Failed to send confirmation email:", err));
 
     return user;
 };

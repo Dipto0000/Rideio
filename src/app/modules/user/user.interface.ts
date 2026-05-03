@@ -13,8 +13,11 @@ export enum SubRole {
 
 export enum UserStatus {
     ACTIVE = "ACTIVE",
+    INACTIVE = "INACTIVE",
     BLOCKED = "BLOCKED",
 }
+
+export const IsActive = UserStatus; // Alias for compatibility with sample code
 
 export interface IAuthProvider {
     provider: "google" | "credentials";

@@ -12,12 +12,17 @@ interface EnvConfig {
     JWT_REFRESH_SECRET: string;
     JWT_REFRESH_EXPIRES: string;
     FRONTEND_URL: string;
+    MAILTRAP_HOST: string;
+    MAILTRAP_PORT: string;
+    MAILTRAP_USER: string;
+    MAILTRAP_PASS: string;
 }
 
 const loadEnvVariables = (): EnvConfig => {
     const requiredEnvVariables: string[] = [
         "PORT", "DB_URL", "NODE_ENV", "BCRYPT_SALT_ROUND",
-        "JWT_ACCESS_EXPIRES", "JWT_ACCESS_SECRET", "JWT_REFRESH_SECRET", "JWT_REFRESH_EXPIRES", "FRONTEND_URL"
+        "JWT_ACCESS_EXPIRES", "JWT_ACCESS_SECRET", "JWT_REFRESH_SECRET", "JWT_REFRESH_EXPIRES", "FRONTEND_URL",
+        "MAILTRAP_HOST", "MAILTRAP_PORT", "MAILTRAP_USER", "MAILTRAP_PASS"
     ];
 
     requiredEnvVariables.forEach(key => {
@@ -36,6 +41,10 @@ const loadEnvVariables = (): EnvConfig => {
         JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET as string,
         JWT_REFRESH_EXPIRES: process.env.JWT_REFRESH_EXPIRES as string,
         FRONTEND_URL: process.env.FRONTEND_URL as string,
+        MAILTRAP_HOST: process.env.MAILTRAP_HOST as string,
+        MAILTRAP_PORT: process.env.MAILTRAP_PORT as string,
+        MAILTRAP_USER: process.env.MAILTRAP_USER as string,
+        MAILTRAP_PASS: process.env.MAILTRAP_PASS as string,
     };
 }
 
