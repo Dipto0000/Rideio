@@ -3,6 +3,7 @@ import { JwtPayload } from 'jsonwebtoken';
 import { envVars } from '../config/env.js';
 import AppError from '../errorHelpers/AppError.js';
 import { generateToken, verifyToken } from './jwt.js';
+import { Role, SubRole } from '../modules/user/user.interface.js';
 
 export interface IUserTokens {
   accessToken: string;
@@ -12,12 +13,14 @@ export interface IUserTokens {
 export const createUserTokens = (
   userId: string,
   email: string,
-  role: string
+  role: Role,
+  subRole: SubRole
 ): IUserTokens => {
   const jwtPayload = {
     userId,
     email,
     role,
+    subRole,
   };
 
   const accessToken = generateToken(

@@ -1,24 +1,29 @@
 import { Response } from 'express';
 import { TErrorSources } from '../interfaces/error.types.js';
 
-export interface IApiResponse<T = unknown> {
-  statusCode: number;
-  success: boolean;
-  message: string;
-  data?: T;
-  meta?: Record<string, unknown>;
-  errorSources?: TErrorSources[];
+export interface TMeta {
+    page: number;
+    limit: number;
+    totalPage: number;
+    total: number;
 }
 
-export const sendResponse = <T = unknown>(
-  res: Response,
-  options: IApiResponse<T>
-): void => {
-  res.status(options.statusCode).json({
-    success: options.success,
-    message: options.message,
-    ...(options.data !== undefined && { data: options.data }),
-    ...(options.meta !== undefined && { meta: options.meta }),
-    ...(options.errorSources !== undefined && { errorSources: options.errorSources }),
-  });
+export interface TResponse<T> {
+    statusCode: number;
+    success: boolean;
+    message: string;
+    data?: T;
+    meta?: TMeta;
+    errorSources?: TErrorSources[];
+}
+
+export const sendResponse = <T>(res: Response, data: TResponse<T>) => {
+    res.status(data.statusCode).json({
+        statusCode: data.statusCode,
+        success: data.success,
+        message: data.message,
+        meta: data.meta,
+        data: data.data,
+        ...(data.errorSources && { errorSources: data.errorSources }),
+    });
 };

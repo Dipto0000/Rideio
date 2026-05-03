@@ -3,12 +3,9 @@ import { StatusCodes } from 'http-status-codes';
 import { verifyToken } from '../utils/jwt.js';
 import AppError from '../errorHelpers/AppError.js';
 import { envVars } from '../config/env.js';
+import { IAuthUser, Role, SubRole } from '../modules/user/user.interface.js';
 
-export enum Role {
-  RIDER = 'Rider',
-  DRIVER = 'Driver',
-  ADMIN = 'Admin',
-}
+type AllowedRole = Role | SubRole;
 
 /**
  * checkAuth middleware - Next.js compatible
@@ -17,7 +14,7 @@ export enum Role {
  * 2. Cookie: "accessToken"
  * 3. Cookie: "refreshToken" (for refresh endpoint)
  */
-export const checkAuth = (...allowedRoles: Role[]) => {
+export const checkAuth = (...allowedRoles: AllowedRole[]) => {
   return (req: Request, _res: Response, next: NextFunction): void => {
     try {
       let token: string | undefined;
@@ -48,12 +45,16 @@ export const checkAuth = (...allowedRoles: Role[]) => {
         throw new AppError(StatusCodes.UNAUTHORIZED, 'Invalid token');
       }
 
-      // Check role authorization
-      if (allowedRoles.length > 0 && !allowedRoles.includes(decoded.role as Role)) {
+      const user = decoded as IAuthUser;
+
+      // Check role authorization (matches either role or subRole)
+      if (allowedRoles.length > 0 && 
+          !allowedRoles.includes(user.role as AllowedRole) && 
+          !allowedRoles.includes(user.subRole as AllowedRole)) {
         throw new AppError(StatusCodes.FORBIDDEN, 'You are not authorized to access this resource');
       }
 
-      req.user = decoded;
+      req.user = user;
       next();
     } catch (error) {
       next(error);

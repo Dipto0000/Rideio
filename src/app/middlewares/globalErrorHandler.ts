@@ -3,6 +3,7 @@ import { NextFunction, Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import AppError from '../errorHelpers/AppError.js';
 import { sendResponse } from '../utils/sendResponse.js';
+import { TErrorSources } from '../interfaces/error.types.js';
 import { handleCastError } from '../helpers/handleCastError.js';
 import { handleDuplicateError } from '../helpers/handleDuplicateError.js';
 import { handleValidationError } from '../helpers/handleValidationError.js';
@@ -16,7 +17,7 @@ export const globalErrorHandler = (
 ) => {
   let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
   let message = 'Something went wrong!';
-  let errorSources: { path: string; message: string }[] = [];
+  let errorSources: TErrorSources[] = [];
 
   // Duplicate error (E11000)
   if (err.code === 11000) {
