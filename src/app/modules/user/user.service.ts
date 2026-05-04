@@ -10,7 +10,7 @@ import { IAuthProvider, IUser, Role, SubRole } from "./user.interface.js";
 import { User } from "./user.model.js";
 
 const createUser = async (payload: Partial<IUser>) => {
-    const { email, password, name, ...rest } = payload;
+    const { email, password, name, vehicleType, numberplate, licenseNumber, dob, ...rest } = payload;
 
     const isUserExist = await User.findOne({ email });
 
@@ -34,6 +34,11 @@ const createUser = async (payload: Partial<IUser>) => {
         password: hashedPassword,
         auths: [authProvider],
         name: name as string,
+        // Driver-specific fields
+        vehicleType,
+        numberplate,
+        licenseNumber,
+        dob: dob ? new Date(dob) : undefined,
         ...rest,
     });
 

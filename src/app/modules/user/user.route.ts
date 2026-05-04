@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { catchAsync } from '../../utils/catchAsync.js';
 import { validateRequest } from '../../middlewares/validateRequest.js';
 import { checkAuth } from '../../middlewares/checkAuth.js';
 import { parseFormData } from '../../middlewares/parseFormData.js';
@@ -15,24 +14,24 @@ router.post(
     parseFormData,
     multerUpload.single('profilePicture'),
     validateRequest(createUserValidation),
-    catchAsync(UserController.registerUser)
+    UserController.registerUser
 );
 
 router.get(
     '/all-users',
     checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
-    catchAsync(UserController.getAllUsers)
+    UserController.getAllUsers
 );
 
-router.get('/me', checkAuth(), catchAsync(UserController.getMe));
+router.get('/me', checkAuth(), UserController.getMe);
 
-router.get('/:id', checkAuth(), catchAsync(UserController.getSingleUser));
+router.get('/:id', checkAuth(), UserController.getSingleUser);
 
 router.patch(
     '/:id',
     checkAuth(),
     validateRequest(updateUserValidation),
-    catchAsync(UserController.updateUser)
+    UserController.updateUser
 );
 
 export default router;

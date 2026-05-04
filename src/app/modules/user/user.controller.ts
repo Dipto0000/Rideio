@@ -1,11 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import { StatusCodes } from 'http-status-codes';
+import { catchAsync } from '../../utils/catchAsync.js';
 import { sendResponse } from '../../utils/sendResponse.js';
 import { UserServices } from './user.service.js';
 import { IAuthUser } from './user.interface.js';
 
 export const UserController = {
-    registerUser: async (req: Request, res: Response, _next: NextFunction) => {
+    registerUser: catchAsync(async (req: Request, res: Response) => {
         const picture = req.file ? (req.file as any).path || (req.file as any).secure_url : undefined;
         const result = await UserServices.createUser({ ...req.body, picture });
 
@@ -15,9 +16,9 @@ export const UserController = {
             message: 'User registered successfully',
             data: result,
         });
-    },
+    }),
 
-    getAllUsers: async (req: Request, res: Response, _next: NextFunction) => {
+    getAllUsers: catchAsync(async (req: Request, res: Response) => {
         const query = req.query as Record<string, string>;
         const result = await UserServices.getAllUsers(query);
 
@@ -28,9 +29,9 @@ export const UserController = {
             data: result.data,
             meta: result.meta,
         });
-    },
+    }),
 
-    getSingleUser: async (req: Request, res: Response, _next: NextFunction) => {
+    getSingleUser: catchAsync(async (req: Request, res: Response) => {
         const id = req.params.id as string;
         const result = await UserServices.getSingleUser(id);
 
@@ -40,9 +41,9 @@ export const UserController = {
             message: 'User retrieved successfully',
             data: result.data,
         });
-    },
+    }),
 
-    updateUser: async (req: Request, res: Response, _next: NextFunction) => {
+    updateUser: catchAsync(async (req: Request, res: Response) => {
         const user = req.user as IAuthUser;
         const id = req.params.id as string;
         const result = await UserServices.updateUser(
@@ -57,9 +58,9 @@ export const UserController = {
             message: 'User updated successfully',
             data: result,
         });
-    },
+    }),
 
-    getMe: async (req: Request, res: Response, _next: NextFunction) => {
+    getMe: catchAsync(async (req: Request, res: Response) => {
         const user = req.user as IAuthUser;
         const result = await UserServices.getMe(user.userId as string);
 
@@ -69,5 +70,5 @@ export const UserController = {
             message: 'User profile retrieved successfully',
             data: result.data,
         });
-    },
+    }),
 };

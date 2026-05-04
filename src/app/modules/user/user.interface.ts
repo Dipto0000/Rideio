@@ -31,6 +31,14 @@ export interface IAuthUser {
     subRole: SubRole;
 }
 
+export interface INotification {
+    message: string;
+    rideId: Types.ObjectId;
+    type: 'RIDE_CANCELLED' | 'RIDE_ACCEPTED';
+    isRead: boolean;
+    createdAt: Date;
+}
+
 export interface IUser {
     _id?: Types.ObjectId;
     name: string;
@@ -50,5 +58,12 @@ export interface IUser {
         isSubscribed: boolean;
         expiryDate?: Date;
     };
+    // Driver-specific fields
+    vehicleType?: 'bike' | 'car';
+    numberplate?: string;
+    licenseNumber?: string;
+    dob?: Date;
+    // Notifications
+    notifications: INotification[];
     isDeleted: boolean;
 }
