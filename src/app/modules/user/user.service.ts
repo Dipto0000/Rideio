@@ -1,4 +1,4 @@
-import httpStatus from "http-status-codes";
+import { StatusCodes } from "http-status-codes";
 import bcryptjs from 'bcryptjs';
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { envVars } from "../../config/env.js";
@@ -15,7 +15,7 @@ const createUser = async (payload: Partial<IUser>) => {
     const isUserExist = await User.findOne({ email });
 
     if (isUserExist) {
-        throw new AppError(httpStatus.BAD_REQUEST, "User Already Exists");
+        throw new AppError(StatusCodes.BAD_REQUEST, "User Already Exists");
     }
 
     // Manually hash password
@@ -76,24 +76,24 @@ const updateUser = async (
     const user = await User.findById(userId);
 
     if (!user) {
-        throw new AppError(httpStatus.NOT_FOUND, "User Not Found");
+        throw new AppError(StatusCodes.NOT_FOUND, "User Not Found");
     }
 
     // Authorization checks
     if (decodedToken.role === Role.USER || decodedToken.subRole === SubRole.RIDER || decodedToken.subRole === SubRole.DRIVER) {
         if (userId !== decodedToken.userId) {
-            throw new AppError(httpStatus.UNAUTHORIZED, "You are not authorized");
+            throw new AppError(StatusCodes.UNAUTHORIZED, "You are not authorized");
         }
     }
 
     if (decodedToken.role === Role.ADMIN && user.role === Role.SUPER_ADMIN) {
-        throw new AppError(httpStatus.UNAUTHORIZED, "You are not authorized");
+        throw new AppError(StatusCodes.UNAUTHORIZED, "You are not authorized");
     }
 
     // Role/Status changes require admin privileges
     if (payload.role || payload.status || payload.isDeleted || payload.isVerified) {
         if (decodedToken.role === Role.USER || decodedToken.subRole === SubRole.RIDER || decodedToken.subRole === SubRole.DRIVER) {
-            throw new AppError(httpStatus.FORBIDDEN, "You are not authorized");
+            throw new AppError(StatusCodes.FORBIDDEN, "You are not authorized");
         }
     }
 

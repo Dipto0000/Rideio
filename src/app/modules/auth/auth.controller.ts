@@ -1,12 +1,12 @@
 import { catchAsync } from "../../utils/catchAsync.js";
 import { sendResponse } from "../../utils/sendResponse.js";
 import { AuthServices } from "./auth.service.js";
-import httpStatus from "http-status-codes";
+import { StatusCodes } from "http-status-codes";
 
 const credentialsLogin = catchAsync(async (req, res) => {
     const result = await AuthServices.credentialsLogin(req.body);
     sendResponse(res, {
-        statusCode: httpStatus.OK,
+        statusCode: StatusCodes.OK,
         success: true,
         message: "Login successful",
         data: result,
@@ -16,7 +16,7 @@ const credentialsLogin = catchAsync(async (req, res) => {
 const handleGoogleAuth = catchAsync(async (req, res) => {
     const result = await AuthServices.handleGoogleAuth(req.body);
     sendResponse(res, {
-        statusCode: httpStatus.OK,
+        statusCode: StatusCodes.OK,
         success: true,
         message: "Google login successful",
         data: result,
@@ -26,7 +26,7 @@ const handleGoogleAuth = catchAsync(async (req, res) => {
 const verifyEmail = catchAsync(async (req, res) => {
     const result = await AuthServices.verifyEmail(req.body.token || req.query.token as string);
     sendResponse(res, {
-        statusCode: httpStatus.OK,
+        statusCode: StatusCodes.OK,
         success: true,
         message: result.message,
         data: result,
@@ -36,7 +36,7 @@ const verifyEmail = catchAsync(async (req, res) => {
 const resendConfirmation = catchAsync(async (req, res) => {
     const result = await AuthServices.resendConfirmation(req.body.email);
     sendResponse(res, {
-        statusCode: httpStatus.OK,
+        statusCode: StatusCodes.OK,
         success: true,
         message: result.message,
         data: result,
@@ -46,7 +46,7 @@ const resendConfirmation = catchAsync(async (req, res) => {
 const forgotPassword = catchAsync(async (req, res) => {
     const result = await AuthServices.forgotPassword(req.body.email);
     sendResponse(res, {
-        statusCode: httpStatus.OK,
+        statusCode: StatusCodes.OK,
         success: true,
         message: result.message,
         data: result,
@@ -59,7 +59,7 @@ const resetPassword = catchAsync(async (req, res) => {
         token: req.body.token || req.query.token as string,
     });
     sendResponse(res, {
-        statusCode: httpStatus.OK,
+        statusCode: StatusCodes.OK,
         success: true,
         message: result.message,
         data: result,
@@ -76,7 +76,7 @@ const changePassword = catchAsync(async (req, res) => {
         req.user
     );
     sendResponse(res, {
-        statusCode: httpStatus.OK,
+        statusCode: StatusCodes.OK,
         success: true,
         message: result.message,
         data: result,
@@ -92,7 +92,7 @@ const setPassword = catchAsync(async (req, res) => {
         req.body.password
     );
     sendResponse(res, {
-        statusCode: httpStatus.OK,
+        statusCode: StatusCodes.OK,
         success: true,
         message: result.message,
         data: result,
@@ -102,7 +102,7 @@ const setPassword = catchAsync(async (req, res) => {
 const getNewAccessToken = catchAsync(async (req, res) => {
     const result = await AuthServices.getNewAccessToken(req.body.refreshToken);
     sendResponse(res, {
-        statusCode: httpStatus.OK,
+        statusCode: StatusCodes.OK,
         success: true,
         message: "Access token generated",
         data: result,

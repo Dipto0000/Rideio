@@ -1,4 +1,4 @@
-import httpStatus from "http-status-codes";
+import { StatusCodes } from "http-status-codes";
 import { Types } from "mongoose";
 import { envVars } from "../../config/env.js";
 import AppError from "../../errorHelpers/AppError.js";
@@ -65,7 +65,7 @@ const getRideById = async (id: string, userId: string) => {
         .populate("driverId", "name phone picture vehicleType numberplate");
 
     if (!ride) {
-        throw new AppError(httpStatus.NOT_FOUND, "Ride not found");
+        throw new AppError(StatusCodes.NOT_FOUND, "Ride not found");
     }
 
     // If ride is accepted, show full details to involved parties
@@ -98,12 +98,12 @@ const acceptRide = async (rideId: string, driverId: string) => {
     const ride = await Ride.findById(rideId);
 
     if (!ride) {
-        throw new AppError(httpStatus.NOT_FOUND, "Ride not found");
+        throw new AppError(StatusCodes.NOT_FOUND, "Ride not found");
     }
 
     if (ride.status !== RideStatus.PENDING) {
         throw new AppError(
-            httpStatus.BAD_REQUEST,
+            StatusCodes.BAD_REQUEST,
             `Ride is already ${ride.status}`
         );
     }
@@ -133,19 +133,19 @@ const cancelRide = async (rideId: string, riderId: string) => {
     const ride = await Ride.findById(rideId);
 
     if (!ride) {
-        throw new AppError(httpStatus.NOT_FOUND, "Ride not found");
+        throw new AppError(StatusCodes.NOT_FOUND, "Ride not found");
     }
 
     if (ride.riderId.toString() !== riderId) {
         throw new AppError(
-            httpStatus.FORBIDDEN,
+            StatusCodes.FORBIDDEN,
             "Only the rider can cancel this ride"
         );
     }
 
     if (ride.status !== RideStatus.PENDING) {
         throw new AppError(
-            httpStatus.BAD_REQUEST,
+            StatusCodes.BAD_REQUEST,
             "Ride can only be cancelled when pending"
         );
     }
@@ -176,19 +176,19 @@ const startRide = async (rideId: string, driverId: string) => {
     const ride = await Ride.findById(rideId);
 
     if (!ride) {
-        throw new AppError(httpStatus.NOT_FOUND, "Ride not found");
+        throw new AppError(StatusCodes.NOT_FOUND, "Ride not found");
     }
 
     if (ride.driverId?.toString() !== driverId) {
         throw new AppError(
-            httpStatus.FORBIDDEN,
+            StatusCodes.FORBIDDEN,
             "Only the assigned driver can start this ride"
         );
     }
 
     if (ride.status !== RideStatus.ACCEPTED) {
         throw new AppError(
-            httpStatus.BAD_REQUEST,
+            StatusCodes.BAD_REQUEST,
             "Ride must be accepted before starting"
         );
     }
@@ -203,19 +203,19 @@ const completeRide = async (rideId: string, driverId: string) => {
     const ride = await Ride.findById(rideId);
 
     if (!ride) {
-        throw new AppError(httpStatus.NOT_FOUND, "Ride not found");
+        throw new AppError(StatusCodes.NOT_FOUND, "Ride not found");
     }
 
     if (ride.driverId?.toString() !== driverId) {
         throw new AppError(
-            httpStatus.FORBIDDEN,
+            StatusCodes.FORBIDDEN,
             "Only the assigned driver can complete this ride"
         );
     }
 
     if (ride.status !== RideStatus.IN_PROGRESS) {
         throw new AppError(
-            httpStatus.BAD_REQUEST,
+            StatusCodes.BAD_REQUEST,
             "Ride must be in progress before completing"
         );
     }
@@ -263,7 +263,7 @@ const getDriverNotifications = async (
     const user = await User.findById(driverId).select("notifications");
 
     if (!user) {
-        throw new AppError(httpStatus.NOT_FOUND, "User not found");
+        throw new AppError(StatusCodes.NOT_FOUND, "User not found");
     }
 
     const page = parseInt(query.page as string) || 1;

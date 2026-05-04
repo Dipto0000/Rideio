@@ -39,18 +39,21 @@ router.patch(
 router.patch(
     "/:id/start",
     checkAuth(),
+    checkSubscription,
     RideController.startRide
 );
 
 router.patch(
     "/:id/complete",
     checkAuth(),
+    checkSubscription,
     RideController.completeRide
 );
 
 router.get(
     "/driver/notifications",
     checkAuth(),
+    checkSubscription,
     RideController.getDriverNotifications
 );
 

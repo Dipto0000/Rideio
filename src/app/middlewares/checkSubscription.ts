@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
-import httpStatus from "http-status-codes";
+import { StatusCodes } from "http-status-codes";
 import { User } from "../modules/user/user.model.js";
+import { SubRole } from "../modules/user/user.interface.js";
 import AppError from "../errorHelpers/AppError.js";
 
 export const checkSubscription = async (
@@ -9,9 +10,14 @@ export const checkSubscription = async (
     next: NextFunction
 ) => {
     const driverId = req.user?.userId;
+    const subRole = req.user?.subRole;
 
     if (!driverId) {
-        return next(new AppError(httpStatus.UNAUTHORIZED, "Authentication required"));
+        return next(new AppError(StatusCodes.UNAUTHORIZED, "Authentication required"));
+    }
+
+    if (subRole !== SubRole.DRIVER) {
+        return next(new AppError(StatusCodes.FORBIDDEN, "Only drivers can access this resource"));
     }
 
     const user = await User.findById(driverId).select("subscription");
@@ -19,7 +25,7 @@ export const checkSubscription = async (
     if (!user?.subscription?.isSubscribed) {
         return next(
             new AppError(
-                httpStatus.FORBIDDEN,
+                StatusCodes.FORBIDDEN,
                 "Subscription required to accept rides. Please subscribe first."
             )
         );
@@ -28,7 +34,7 @@ export const checkSubscription = async (
     if (user.subscription.expiryDate && user.subscription.expiryDate < new Date()) {
         return next(
             new AppError(
-                httpStatus.FORBIDDEN,
+                StatusCodes.FORBIDDEN,
                 "Subscription expired. Please renew your subscription."
             )
         );

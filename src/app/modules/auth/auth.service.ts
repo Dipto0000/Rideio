@@ -1,4 +1,4 @@
-import httpStatus from "http-status-codes";
+import { StatusCodes } from "http-status-codes";
 import bcryptjs from "bcryptjs";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { envVars } from "../../config/env.js";
@@ -14,29 +14,29 @@ const credentialsLogin = async (payload: { email: string; password: string }) =>
     const user = await User.findOne({ email }).select("+password");
 
     if (!user) {
-        throw new AppError(httpStatus.BAD_REQUEST, "Invalid email or password");
+        throw new AppError(StatusCodes.BAD_REQUEST, "Invalid email or password");
     }
 
     if (!user.password) {
-        throw new AppError(httpStatus.BAD_REQUEST, "Please log in with Google or set a password first");
+        throw new AppError(StatusCodes.BAD_REQUEST, "Please log in with Google or set a password first");
     }
 
     const isPasswordMatched = await bcryptjs.compare(password, user.password);
 
     if (!isPasswordMatched) {
-        throw new AppError(httpStatus.StatusCodes.BAD_REQUEST, "Invalid email or password");
+        throw new AppError(StatusCodes.BAD_REQUEST, "Invalid email or password");
     }
 
     if (!user.isVerified) {
-        throw new AppError(httpStatus.StatusCodes.BAD_REQUEST, "Please verify your email first");
+        throw new AppError(StatusCodes.BAD_REQUEST, "Please verify your email first");
     }
 
     if (user.status === IsActive.BLOCKED || user.status === IsActive.INACTIVE) {
-        throw new AppError(httpStatus.StatusCodes.BAD_REQUEST, `User is ${user.status}`);
+        throw new AppError(StatusCodes.BAD_REQUEST, `User is ${user.status}`);
     }
 
     if (user.isDeleted) {
-        throw new AppError(httpStatus.StatusCodes.BAD_REQUEST, "User is deleted");
+        throw new AppError(StatusCodes.BAD_REQUEST, "User is deleted");
     }
 
     const userTokens = createUserTokens(
@@ -101,7 +101,7 @@ const verifyEmail = async (token: string) => {
         const user = await User.findById(decoded.userId);
 
         if (!user) {
-            throw new AppError(httpStatus.BAD_REQUEST, "Invalid token");
+            throw new AppError(StatusCodes.BAD_REQUEST, "Invalid token");
         }
 
         if (user.isVerified) {
@@ -142,7 +142,7 @@ const verifyEmail = async (token: string) => {
             user: rest,
         };
     } catch (error) {
-        throw new AppError(httpStatus.BAD_REQUEST, "Invalid or expired token");
+        throw new AppError(StatusCodes.BAD_REQUEST, "Invalid or expired token");
     }
 };
 
@@ -150,11 +150,11 @@ const resendConfirmation = async (email: string) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-        throw new AppError(httpStatus.BAD_REQUEST, "User not found");
+        throw new AppError(StatusCodes.BAD_REQUEST, "User not found");
     }
 
     if (user.isVerified) {
-        throw new AppError(httpStatus.BAD_REQUEST, "Email already verified");
+        throw new AppError(StatusCodes.BAD_REQUEST, "Email already verified");
     }
 
     const verificationToken = jwt.sign(
@@ -185,19 +185,19 @@ const forgotPassword = async (email: string) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-        throw new AppError(httpStatus.BAD_REQUEST, "User does not exist");
+        throw new AppError(StatusCodes.BAD_REQUEST, "User does not exist");
     }
 
     if (!user.isVerified) {
-        throw new AppError(httpStatus.BAD_REQUEST, "User is not verified");
+        throw new AppError(StatusCodes.BAD_REQUEST, "User is not verified");
     }
 
     if (user.status === IsActive.BLOCKED || user.status === IsActive.INACTIVE) {
-        throw new AppError(httpStatus.BAD_REQUEST, `User is ${user.status}`);
+        throw new AppError(StatusCodes.BAD_REQUEST, `User is ${user.status}`);
     }
 
     if (user.isDeleted) {
-        throw new AppError(httpStatus.BAD_REQUEST, "User is deleted");
+        throw new AppError(StatusCodes.BAD_REQUEST, "User is deleted");
     }
 
     const resetToken = jwt.sign(
@@ -227,7 +227,7 @@ const resetPassword = async (payload: { newPassword: string; token: string }) =>
         const user = await User.findById(decoded.userId).select("+password");
 
         if (!user) {
-            throw new AppError(httpStatus.BAD_REQUEST, "User not found");
+            throw new AppError(StatusCodes.BAD_REQUEST, "User not found");
         }
 
         const hashedPassword = await bcryptjs.hash(
@@ -240,7 +240,7 @@ const resetPassword = async (payload: { newPassword: string; token: string }) =>
 
         return { message: "Password reset successfully" };
     } catch (error) {
-        throw new AppError(httpStatus.BAD_REQUEST, "Invalid or expired token");
+        throw new AppError(StatusCodes.BAD_REQUEST, "Invalid or expired token");
     }
 };
 
@@ -248,12 +248,12 @@ const changePassword = async (oldPassword: string, newPassword: string, decodedT
     const user = await User.findById(decodedToken.userId).select("+password");
 
     if (!user) {
-        throw new AppError(httpStatus.NOT_FOUND, "User not found");
+        throw new AppError(StatusCodes.NOT_FOUND, "User not found");
     }
 
     const isOldPasswordMatch = await bcryptjs.compare(oldPassword, user.password as string);
     if (!isOldPasswordMatch) {
-        throw new AppError(httpStatus.UNAUTHORIZED, "Old password does not match");
+        throw new AppError(StatusCodes.UNAUTHORIZED, "Old password does not match");
     }
 
     user.password = await bcryptjs.hash(newPassword, Number(envVars.BCRYPT_SALT_ROUND));
@@ -266,12 +266,12 @@ const setPassword = async (userId: string, plainPassword: string) => {
     const user = await User.findById(userId);
 
     if (!user) {
-        throw new AppError(httpStatus.NOT_FOUND, "User not found");
+        throw new AppError(StatusCodes.NOT_FOUND, "User not found");
     }
 
     const hasCredentials = user.auths.some((auth) => auth.provider === "credentials");
     if (hasCredentials) {
-        throw new AppError(httpStatus.BAD_REQUEST, "You have already set your password");
+        throw new AppError(StatusCodes.BAD_REQUEST, "You have already set your password");
     }
 
     const hashedPassword = await bcryptjs.hash(

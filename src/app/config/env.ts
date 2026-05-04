@@ -19,6 +19,13 @@ interface EnvConfig {
     CLOUDINARY_CLOUD_NAME: string;
     CLOUDINARY_API_KEY: string;
     CLOUDINARY_API_SECRET: string;
+    SSL_STORE_ID: string;
+    SSL_STORE_PASSWORD: string;
+    SSL_IS_SANDBOX: string;
+    SSL_SUCCESS_URL: string;
+    SSL_CANCEL_URL: string;
+    SSL_FAIL_URL: string;
+    SSL_IPN_URL: string;
 }
 
 const loadEnvVariables = (): EnvConfig => {
@@ -26,7 +33,9 @@ const loadEnvVariables = (): EnvConfig => {
         "PORT", "DB_URL", "NODE_ENV", "BCRYPT_SALT_ROUND",
         "JWT_ACCESS_EXPIRES", "JWT_ACCESS_SECRET", "JWT_REFRESH_SECRET", "JWT_REFRESH_EXPIRES", "FRONTEND_URL",
         "MAILTRAP_HOST", "MAILTRAP_PORT", "MAILTRAP_USER", "MAILTRAP_PASS",
-        "CLOUDINARY_CLOUD_NAME", "CLOUDINARY_API_KEY", "CLOUDINARY_API_SECRET"
+        "CLOUDINARY_CLOUD_NAME", "CLOUDINARY_API_KEY", "CLOUDINARY_API_SECRET",
+        "SSL_STORE_ID", "SSL_STORE_PASSWORD", "SSL_IS_SANDBOX",
+        "SSL_SUCCESS_URL", "SSL_CANCEL_URL", "SSL_FAIL_URL", "SSL_IPN_URL"
     ];
 
     requiredEnvVariables.forEach(key => {
@@ -52,6 +61,13 @@ const loadEnvVariables = (): EnvConfig => {
         CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME!,
         CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY!,
         CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET!,
+        SSL_STORE_ID: process.env.SSL_STORE_ID!,
+        SSL_STORE_PASSWORD: process.env.SSL_STORE_PASSWORD!,
+        SSL_IS_SANDBOX: process.env.SSL_IS_SANDBOX!,
+        SSL_SUCCESS_URL: process.env.SSL_SUCCESS_URL!,
+        SSL_CANCEL_URL: process.env.SSL_CANCEL_URL!,
+        SSL_FAIL_URL: process.env.SSL_FAIL_URL!,
+        SSL_IPN_URL: process.env.SSL_IPN_URL!,
     };
 }
 
