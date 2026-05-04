@@ -6,7 +6,8 @@ import { IAuthUser } from './user.interface.js';
 
 export const UserController = {
     registerUser: async (req: Request, res: Response, _next: NextFunction) => {
-        const result = await UserServices.createUser(req.body);
+        const picture = req.file ? (req.file as any).path || (req.file as any).secure_url : undefined;
+        const result = await UserServices.createUser({ ...req.body, picture });
 
         sendResponse(res, {
             statusCode: StatusCodes.CREATED,

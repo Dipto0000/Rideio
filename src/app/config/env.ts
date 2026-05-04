@@ -16,13 +16,17 @@ interface EnvConfig {
     MAILTRAP_PORT: string;
     MAILTRAP_USER: string;
     MAILTRAP_PASS: string;
+    CLOUDINARY_CLOUD_NAME: string;
+    CLOUDINARY_API_KEY: string;
+    CLOUDINARY_API_SECRET: string;
 }
 
 const loadEnvVariables = (): EnvConfig => {
     const requiredEnvVariables: string[] = [
         "PORT", "DB_URL", "NODE_ENV", "BCRYPT_SALT_ROUND",
         "JWT_ACCESS_EXPIRES", "JWT_ACCESS_SECRET", "JWT_REFRESH_SECRET", "JWT_REFRESH_EXPIRES", "FRONTEND_URL",
-        "MAILTRAP_HOST", "MAILTRAP_PORT", "MAILTRAP_USER", "MAILTRAP_PASS"
+        "MAILTRAP_HOST", "MAILTRAP_PORT", "MAILTRAP_USER", "MAILTRAP_PASS",
+        "CLOUDINARY_CLOUD_NAME", "CLOUDINARY_API_KEY", "CLOUDINARY_API_SECRET"
     ];
 
     requiredEnvVariables.forEach(key => {
@@ -45,6 +49,9 @@ const loadEnvVariables = (): EnvConfig => {
         MAILTRAP_PORT: process.env.MAILTRAP_PORT as string,
         MAILTRAP_USER: process.env.MAILTRAP_USER as string,
         MAILTRAP_PASS: process.env.MAILTRAP_PASS as string,
+        CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME!,
+        CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY!,
+        CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET!,
     };
 }
 

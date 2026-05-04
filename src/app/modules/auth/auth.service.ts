@@ -24,19 +24,19 @@ const credentialsLogin = async (payload: { email: string; password: string }) =>
     const isPasswordMatched = await bcryptjs.compare(password, user.password);
 
     if (!isPasswordMatched) {
-        throw new AppError(httpStatus.BAD_REQUEST, "Invalid email or password");
+        throw new AppError(httpStatus.StatusCodes.BAD_REQUEST, "Invalid email or password");
     }
 
     if (!user.isVerified) {
-        throw new AppError(httpStatus.BAD_REQUEST, "Please verify your email first");
+        throw new AppError(httpStatus.StatusCodes.BAD_REQUEST, "Please verify your email first");
     }
 
     if (user.status === IsActive.BLOCKED || user.status === IsActive.INACTIVE) {
-        throw new AppError(httpStatus.BAD_REQUEST, `User is ${user.status}`);
+        throw new AppError(httpStatus.StatusCodes.BAD_REQUEST, `User is ${user.status}`);
     }
 
     if (user.isDeleted) {
-        throw new AppError(httpStatus.BAD_REQUEST, "User is deleted");
+        throw new AppError(httpStatus.StatusCodes.BAD_REQUEST, "User is deleted");
     }
 
     const userTokens = createUserTokens(
