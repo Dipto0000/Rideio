@@ -38,18 +38,33 @@ const getAllRides = async (query: Record<string, string>) => {
     const limit = parseInt(query.limit as string) || 10;
     const skip = (page - 1) * limit;
 
-    // Only show PENDING rides in public listing
     const rides = await Ride.find({ status: RideStatus.PENDING })
         .populate("riderId", "name")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
-        .select("from to arrivalTime status proposedFare vehicleType riderId");
+        .select("from to arrivalTime status proposedFare vehicleType riderId distanceInKm systemSuggestedFare");
+
+    const sanitizedRides = rides.map((ride) => {
+        const rideObj = ride.toObject();
+        return {
+            _id: rideObj._id,
+            riderName: (rideObj.riderId as any)?.name || "Anonymous",
+            from: { address: rideObj.from.address },
+            to: { address: rideObj.to.address },
+            arrivalTime: rideObj.arrivalTime,
+            status: rideObj.status,
+            proposedFare: rideObj.proposedFare,
+            vehicleType: rideObj.vehicleType,
+            distanceInKm: rideObj.distanceInKm,
+            systemSuggestedFare: rideObj.systemSuggestedFare,
+        };
+    });
 
     const total = await Ride.countDocuments({ status: RideStatus.PENDING });
 
     return {
-        data: rides,
+        data: sanitizedRides,
         meta: {
             page,
             limit,
@@ -91,6 +106,8 @@ const getRideById = async (id: string, userId: string) => {
         status: ride.status,
         proposedFare: ride.proposedFare,
         vehicleType: ride.vehicleType,
+        distanceInKm: ride.distanceInKm,
+        systemSuggestedFare: ride.systemSuggestedFare,
     };
 };
 
@@ -143,10 +160,10 @@ const cancelRide = async (rideId: string, riderId: string) => {
         );
     }
 
-    if (ride.status !== RideStatus.PENDING) {
+    if (ride.status !== RideStatus.PENDING && ride.status !== RideStatus.ACCEPTED) {
         throw new AppError(
             StatusCodes.BAD_REQUEST,
-            "Ride can only be cancelled when pending"
+            "Ride can only be cancelled before it starts"
         );
     }
 

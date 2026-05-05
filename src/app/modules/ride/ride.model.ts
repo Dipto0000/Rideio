@@ -30,6 +30,7 @@ const rideSchema = new Schema<IRide>(
         proposedFare: { type: Number, required: true },
         systemSuggestedFare: { type: Number },
         distanceInKm: { type: Number },
+        isDeleted: { type: Boolean, default: false },
     },
     {
         timestamps: true,

@@ -65,5 +65,8 @@ export interface IUser {
     dob?: Date;
     // Notifications
     notifications: INotification[];
+    // Rating fields (for drivers)
+    averageRating?: number;
+    totalReviews?: number;
     isDeleted: boolean;
 }

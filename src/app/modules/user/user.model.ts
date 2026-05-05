@@ -55,6 +55,9 @@ const userSchema = new Schema<IUser>(
         dob: { type: Date },
         // Notifications
         notifications: [notificationSchema],
+        // Rating fields (for drivers)
+        averageRating: { type: Number, default: 0 },
+        totalReviews: { type: Number, default: 0 },
         isDeleted: { type: Boolean, default: false },
     },
     {
