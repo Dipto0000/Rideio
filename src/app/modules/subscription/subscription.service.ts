@@ -1,6 +1,6 @@
 import { StatusCodes } from "http-status-codes";
 import SSLCommerzPayment from "sslcommerz-lts";
-import { randomUUID } from "crypto";
+import { randomUUID, createHash } from "crypto";
 import { envVars } from "../../config/env.js";
 import AppError from "../../errorHelpers/AppError.js";
 import { User } from "../user/user.model.js";
@@ -187,7 +187,90 @@ const handleFail = async (data: Record<string, string>) => {
     return { message: "Payment failed", payment };
 };
 
+// Add IPN signature verification utility
+const verifySSLCommerzIPN = (ipnData: Record<string, string>): boolean => {
+    // Extract the hash from IPN data
+    const receivedHash = ipnData.hash || ipnData.verify_sign;
+    if (!receivedHash) {
+        return false;
+    }
+
+    // Create verification string according to SSLCommerz specification
+    // Parameters to include (in alphabetical order):
+    // amount, bank_tran_id, currency, currency_amount, currency_rate,
+    // cust_addr, cust_city, cust_country, cust_email, cust_name,
+    // cust_state, cust_postcode, cust_tel, cust_txn_id, discount_amount,
+    // dtm, fld1-fld10, inv2, inv3, merchant_id, merchant_serial,
+    // order_id, payment_mode, ship_addr, ship_city, ship_country,
+    // ship_name, ship_postcode, ship_state, ship_tel, store_id,
+    // value_a-value_d, verify_key, verify_sign
+    
+    // For simplicity and based on common SSLCommerz IPN structure,
+    // we'll use the verify_key parameter which tells us which fields to include
+    const verifyKey = ipnData.verify_key;
+    if (!verifyKey) {
+        // Fallback: use common parameters if verify_key not provided
+        const verificationString = 
+            `store_id=${envVars.SSL_STORE_ID}` +
+            `store_passwd=${envVars.SSL_STORE_PASSWORD}` +
+            `&tran_id=${ipnData.tran_id || ''}` +
+            `&amount=${ipnData.amount || ''}` +
+            `&currency=${ipnData.currency || ''}` +
+            `&bank_tran_id=${ipnData.bank_tran_id || ''}` +
+            `&currency_amount=${ipnData.currency_amount || ''}` +
+            `&currency_rate=${ipnData.currency_rate || ''}` +
+            `&discount_amount=${ipnData.discount_amount || ''}` +
+            `&value_a=${ipnData.value_a || ''}` +
+            `&value_b=${ipnData.value_b || ''}` +
+            `&value_c=${ipnData.value_c || ''}` +
+            `&value_d=${ipnData.value_d || ''}` +
+            `&card_no=${ipnData.card_no || ''}` +
+            `&card_issuer=${ipnData.card_issuer || ''}` +
+            `&card_brand=${ipnData.card_brand || ''}` +
+            `&card_issuer_country=${ipnData.card_issuer_country || ''}` +
+            `&card_issuer_country_code=${ipnData.card_issuer_country_code || ''}` +
+            `&verify_sign=${ipnData.verify_sign || ''}` +
+            `&verify_key=${ipnData.verify_key || ''}` +
+            `&status=${ipnData.status || ''}` +
+            `&tran_date=${ipnData.tran_date || ''}` +
+            `&val_id=${ipnData.val_id || ''}` +
+            `&store_amount=${ipnData.store_amount || ''}` +
+            `&card_type=${ipnData.card_type || ''}` +
+            `&risk_level=${ipnData.risk_level || ''}` +
+            `&risk_title=${ipnData.risk_title || ''}` +
+            `&risk_score=${ipnData.risk_score || ''}`;
+        
+        // Create MD5 hash
+        const hash = createHash('md5').update(verificationString).digest('hex');
+        return hash.toLowerCase() === receivedHash.toLowerCase();
+    }
+
+    // If verify_key is provided, parse it and use only those parameters
+    const keys = verifyKey.split(',').map(key => key.trim());
+    let verificationString = `store_id=${envVars.SSL_STORE_ID}`;
+    
+    // Add store password
+    verificationString += `&store_passwd=${envVars.SSL_STORE_PASSWORD}`;
+    
+    // Add parameters in alphabetical order as specified by verify_key
+    const sortedKeys = [...keys].sort();
+    for (const key of sortedKeys) {
+        if (ipnData[key] !== undefined && ipnData[key] !== null) {
+            verificationString += `&${key}=${ipnData[key]}`;
+        }
+    }
+    
+    // Create MD5 hash
+    const hash = createHash('md5').update(verificationString).digest('hex');
+    return hash.toLowerCase() === receivedHash.toLowerCase();
+};
+
 const handleIPN = async (data: Record<string, string>) => {
+    // VERIFY IPN SIGNATURE FIRST
+    if (!verifySSLCommerzIPN(data)) {
+        throw new AppError(StatusCodes.BAD_REQUEST, "Invalid IPN signature");
+    }
+
     const { tran_id, status } = data;
 
     if (!tran_id) {
