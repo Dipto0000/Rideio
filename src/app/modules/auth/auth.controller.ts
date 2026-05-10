@@ -23,6 +23,34 @@ const handleGoogleAuth = catchAsync(async (req, res) => {
     });
 });
 
+const registerRider = catchAsync(async (req, res) => {
+    const result = await AuthServices.registerWithCredentials({
+        ...req.body,
+        role: "USER",
+        subRole: "RIDER"
+    });
+    sendResponse(res, {
+        statusCode: StatusCodes.CREATED,
+        success: true,
+        message: "Rider registered successfully. Please verify your email.",
+        data: result,
+    });
+});
+
+const registerDriver = catchAsync(async (req, res) => {
+    const result = await AuthServices.registerWithCredentials({
+        ...req.body,
+        role: "USER",
+        subRole: "DRIVER"
+    });
+    sendResponse(res, {
+        statusCode: StatusCodes.CREATED,
+        success: true,
+        message: "Driver registered successfully. Please verify your email.",
+        data: result,
+    });
+});
+
 const verifyEmail = catchAsync(async (req, res) => {
     const result = await AuthServices.verifyEmail(req.body.token || req.query.token as string);
     sendResponse(res, {
@@ -112,6 +140,8 @@ const getNewAccessToken = catchAsync(async (req, res) => {
 export const AuthControllers = {
     credentialsLogin,
     handleGoogleAuth,
+    registerRider,
+    registerDriver,
     verifyEmail,
     resendConfirmation,
     forgotPassword,

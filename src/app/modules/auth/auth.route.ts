@@ -20,6 +20,18 @@ router.post(
 );
 
 router.post(
+    "/register/rider",
+    validateRequest(authValidation.registerRiderValidation),
+    AuthControllers.registerRider
+);
+
+router.post(
+    "/register/driver",
+    validateRequest(authValidation.registerDriverValidation),
+    AuthControllers.registerDriver
+);
+
+router.post(
     "/verify-email",
     validateRequest(authValidation.verifyEmailValidation),
     AuthControllers.verifyEmail

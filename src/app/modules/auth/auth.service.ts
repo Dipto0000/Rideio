@@ -54,8 +54,8 @@ const credentialsLogin = async (payload: { email: string; password: string }) =>
     };
 };
 
-const handleGoogleAuth = async (payload: { email: string; name: string; googleId: string; picture?: string }) => {
-    const { email, name, googleId, picture } = payload;
+const handleGoogleAuth = async (payload: { email: string; name: string; googleId: string; picture?: string; phone?: string; address?: string }) => {
+    const { email, name, googleId, picture, phone, address } = payload;
 
     let user = await User.findOne({ email });
 
@@ -63,6 +63,9 @@ const handleGoogleAuth = async (payload: { email: string; name: string; googleId
         const hasGoogleAuth = user.auths.some((auth) => auth.provider === "google");
         if (!hasGoogleAuth) {
             user.auths.push({ provider: "google", providerId: googleId } as IAuthProvider);
+            // Update phone/address if provided
+            if (phone) user.phone = phone;
+            if (address) user.address = address;
             await user.save();
         }
     } else {
@@ -70,6 +73,8 @@ const handleGoogleAuth = async (payload: { email: string; name: string; googleId
             email,
             name,
             picture,
+            phone,
+            address,
             role: Role.USER,
             subRole: SubRole.RIDER,
             isVerified: true,
@@ -92,6 +97,106 @@ const handleGoogleAuth = async (payload: { email: string; name: string; googleId
         accessToken: userTokens.accessToken,
         refreshToken: userTokens.refreshToken,
         user: rest,
+    };
+};
+
+const registerWithCredentials = async (payload: { 
+    email: string; 
+    name: string; 
+    password: string; 
+    phone?: string; 
+    address?: string;
+    vehicleType?: 'bike' | 'car';
+    numberplate?: string;
+    licenseNumber?: string;
+    dob?: string;
+    role: Role;
+    subRole: SubRole;
+}) => {
+    const { 
+        email, 
+        name, 
+        password, 
+        phone, 
+        address,
+        vehicleType,
+        numberplate,
+        licenseNumber,
+        dob,
+        role,
+        subRole
+    } = payload;
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+        throw new AppError(StatusCodes.BAD_REQUEST, "User already exists with this email");
+    }
+
+    // Hash password
+    const hashedPassword = await bcryptjs.hash(password, Number(envVars.BCRYPT_SALT_ROUND));
+
+    // Prepare user data
+    const userData: any = {
+        email,
+        name,
+        password: hashedPassword,
+        role,
+        subRole,
+        isVerified: false, // Requires email verification
+        status: IsActive.ACTIVE,
+        isDeleted: false,
+        subscription: { isSubscribed: false },
+    };
+
+    // Add optional fields if provided
+    if (phone) userData.phone = phone;
+    if (address) userData.address = address;
+
+    // Add driver-specific fields if role is DRIVER
+    if (role === Role.USER && subRole === SubRole.DRIVER) {
+        if (!vehicleType || !numberplate || !licenseNumber || !dob) {
+            throw new AppError(StatusCodes.BAD_REQUEST, "Vehicle type, numberplate, license number, and date of birth are required for drivers");
+        }
+        userData.vehicleType = vehicleType;
+        userData.numberplate = numberplate;
+        userData.licenseNumber = licenseNumber;
+        userData.dob = new Date(dob);
+    }
+
+    // Create user
+    const user = await User.create(userData);
+
+    // Generate verification token
+    const verificationToken = jwt.sign(
+        { userId: user._id, email: user.email },
+        envVars.JWT_ACCESS_SECRET,
+        { expiresIn: "10m" }
+    );
+
+    // Save verification token to user
+    user.verificationToken = verificationToken;
+    user.verificationTokenExpiry = new Date(Date.now() + 10 * 60 * 1000);
+    await user.save();
+
+    // Send verification email
+    const verifyLink = `${envVars.FRONTEND_URL}/verify-email?token=${verificationToken}`;
+    await sendEmail({
+        to: user.email,
+        subject: "Verify Your Email - Rideio",
+        templateName: "verifyEmail",
+        templateData: {
+            name: user.name,
+            verifyLink,
+        },
+    });
+
+    // Return user data without sensitive info
+    const { password: pass, ...rest } = user.toObject();
+
+    return {
+        ...rest,
+        verificationToken, // Return token so frontend can auto-verify if needed
     };
 };
 
@@ -301,6 +406,7 @@ const getNewAccessToken = async (refreshToken: string) => {
 export const AuthServices = {
     credentialsLogin,
     handleGoogleAuth,
+    registerWithCredentials,
     verifyEmail,
     resendConfirmation,
     forgotPassword,
