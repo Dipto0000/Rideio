@@ -1,6 +1,8 @@
 import { Router } from "express";
 import { validateRequest } from "../../middlewares/validateRequest.js";
 import { checkAuth } from "../../middlewares/checkAuth.js";
+import { parseFormData } from "../../middlewares/parseFormData.js";
+import { multerUpload } from "../../config/multer.config.js";
 import { AuthControllers } from "./auth.controller.js";
 import { authValidation } from "./auth.validation.js";
 
@@ -21,12 +23,16 @@ router.post(
 
 router.post(
     "/register/rider",
+    parseFormData,
+    multerUpload.single('profilePicture'),
     validateRequest(authValidation.registerRiderValidation),
     AuthControllers.registerRider
 );
 
 router.post(
     "/register/driver",
+    parseFormData,
+    multerUpload.single('profilePicture'),
     validateRequest(authValidation.registerDriverValidation),
     AuthControllers.registerDriver
 );

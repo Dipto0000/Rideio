@@ -24,8 +24,10 @@ const handleGoogleAuth = catchAsync(async (req, res) => {
 });
 
 const registerRider = catchAsync(async (req, res) => {
+    const picture = req.file ? (req.file as any).path || (req.file as any).secure_url : undefined;
     const result = await AuthServices.registerWithCredentials({
         ...req.body,
+        picture,
         role: "USER",
         subRole: "RIDER"
     });
@@ -38,8 +40,10 @@ const registerRider = catchAsync(async (req, res) => {
 });
 
 const registerDriver = catchAsync(async (req, res) => {
+    const picture = req.file ? (req.file as any).path || (req.file as any).secure_url : undefined;
     const result = await AuthServices.registerWithCredentials({
         ...req.body,
+        picture,
         role: "USER",
         subRole: "DRIVER"
     });
