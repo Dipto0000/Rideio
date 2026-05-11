@@ -42,6 +42,12 @@ const registerRiderValidation = z.object({
     password: z.string().min(6, "Password must be at least 6 characters").optional(),
     phone: z.string().optional(),
     address: z.string().optional(),
+    dob: z.string().optional().refine((val) => {
+        if (!val) return true; // Optional field
+        // Basic date validation - should be a valid past date
+        const date = new Date(val);
+        return !isNaN(date.getTime()) && date < new Date();
+    }, "Invalid date of birth"),
     // Role and subRole are set by the endpoint, not from client
 });
 

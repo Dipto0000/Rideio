@@ -54,8 +54,8 @@ const credentialsLogin = async (payload: { email: string; password: string }) =>
     };
 };
 
-const handleGoogleAuth = async (payload: { email: string; name: string; googleId: string; picture?: string; phone?: string; address?: string }) => {
-    const { email, name, googleId, picture, phone, address } = payload;
+const handleGoogleAuth = async (payload: { email: string; name: string; googleId: string; picture?: string; phone?: string; address?: string; dob?: string }) => {
+    const { email, name, googleId, picture, phone, address, dob } = payload;
 
     let user = await User.findOne({ email });
 
@@ -63,9 +63,12 @@ const handleGoogleAuth = async (payload: { email: string; name: string; googleId
         const hasGoogleAuth = user.auths.some((auth) => auth.provider === "google");
         if (!hasGoogleAuth) {
             user.auths.push({ provider: "google", providerId: googleId } as IAuthProvider);
-            // Update phone/address if provided
+            // Update fields if provided (name from Google might be better, but don't overwrite if user has set it)
+            if (name && !user.name) user.name = name;
+            if (picture) user.picture = picture;
             if (phone) user.phone = phone;
             if (address) user.address = address;
+            if (dob && !user.dob) user.dob = new Date(dob);
             await user.save();
         }
     } else {
@@ -75,9 +78,10 @@ const handleGoogleAuth = async (payload: { email: string; name: string; googleId
             picture,
             phone,
             address,
+            dob: dob ? new Date(dob) : undefined,
             role: Role.USER,
             subRole: SubRole.RIDER,
-            isVerified: true,
+            isVerified: true, // Google users are auto-verified
             auths: [{ provider: "google", providerId: googleId } as IAuthProvider],
             status: IsActive.ACTIVE,
             isDeleted: false,
