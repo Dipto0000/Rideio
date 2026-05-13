@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import app from './app.js';
 import { envVars } from './app/config/env.js';
+import { SubscriptionServices } from './app/modules/subscription/subscription.service.js';
 
 const SHUTDOWN_TIMEOUT = 10_000; // 10 seconds
 let server: ReturnType<typeof app.listen> | null = null;
@@ -44,6 +45,10 @@ const connectDatabase = async () => {
 
 const startServer = async () => {
   await connectDatabase();
+
+  // Seed default subscription plan
+  await SubscriptionServices.seedDefaultPlan();
+  console.log('✅ Subscription plan seeded');
 
 server = app.listen(envVars.PORT, () => {
     console.log(`🚀 Server is running on port ${envVars.PORT} in ${envVars.NODE_ENV} mode`);

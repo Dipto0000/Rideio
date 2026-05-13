@@ -2,6 +2,7 @@ import { StatusCodes } from "http-status-codes";
 import { catchAsync } from "../../utils/catchAsync.js";
 import { sendResponse } from "../../utils/sendResponse.js";
 import { SubscriptionServices } from "./subscription.service.js";
+import { envVars } from "../../config/env.js";
 
 const initPayment = catchAsync(async (req, res) => {
     if (!req.user) {
@@ -20,35 +21,18 @@ const initPayment = catchAsync(async (req, res) => {
 
 const handleSuccess = catchAsync(async (req, res) => {
     const result = await SubscriptionServices.handleSuccess(req.body);
-
-    sendResponse(res, {
-        statusCode: StatusCodes.OK,
-        success: true,
-        message: result.message,
-        data: result.payment,
-    });
+    const tranId = req.body.tran_id || "";
+    res.redirect(302, `${envVars.FRONTEND_URL}/subscription/result?status=success&tran_id=${tranId}`);
 });
 
 const handleCancel = catchAsync(async (req, res) => {
-    const result = await SubscriptionServices.handleCancel(req.body);
-
-    sendResponse(res, {
-        statusCode: StatusCodes.OK,
-        success: true,
-        message: result.message,
-        data: result.payment,
-    });
+    await SubscriptionServices.handleCancel(req.body);
+    res.redirect(302, `${envVars.FRONTEND_URL}/subscription/result?status=cancelled`);
 });
 
 const handleFail = catchAsync(async (req, res) => {
-    const result = await SubscriptionServices.handleFail(req.body);
-
-    sendResponse(res, {
-        statusCode: StatusCodes.OK,
-        success: true,
-        message: result.message,
-        data: result.payment,
-    });
+    await SubscriptionServices.handleFail(req.body);
+    res.redirect(302, `${envVars.FRONTEND_URL}/subscription/result?status=failed`);
 });
 
 const handleIPN = catchAsync(async (req, res) => {

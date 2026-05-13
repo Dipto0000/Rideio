@@ -12,7 +12,7 @@ const getSSLCommerzInstance = () => {
     return new SSLCommerzPayment(
         envVars.SSL_STORE_ID,
         envVars.SSL_STORE_PASSWORD,
-        envVars.SSL_IS_SANDBOX === "true"
+        envVars.SSL_IS_SANDBOX !== "true"
     );
 };
 
@@ -42,6 +42,17 @@ const initPayment = async (userId: string, planType: PlanType) => {
     const plan = await SubscriptionPlan.findOne({ planType, isActive: true, isDeleted: false });
     if (!plan) {
         throw new AppError(StatusCodes.NOT_FOUND, "Subscription plan not found");
+    }
+
+    const existingPending = await Payment.findOne({
+        userId: user._id,
+        planType,
+        status: PaymentStatus.PENDING,
+    });
+    if (existingPending) {
+        throw new AppError(StatusCodes.BAD_REQUEST,
+            "You already have a pending payment. Complete or cancel it first."
+        );
     }
 
     const paymentId = randomUUID().replace(/-/g, "").substring(0, 16).toUpperCase();
