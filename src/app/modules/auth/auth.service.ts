@@ -184,11 +184,11 @@ const registerWithCredentials = async (payload: {
     await user.save();
 
     // Send verification email
-    const verifyLink = `${envVars.FRONTEND_URL}/verify-email?token=${verificationToken}`;
+    const verifyLink = `${envVars.FRONTEND_URL}/auth/verify?token=${verificationToken}`;
     await sendEmail({
         to: user.email,
         subject: "Verify Your Email - Rideio",
-        templateName: "verifyEmail",
+        templateName: "confirmEmail",
         templateData: {
             name: user.name,
             verifyLink,

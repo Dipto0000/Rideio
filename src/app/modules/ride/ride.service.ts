@@ -2,13 +2,13 @@ import { StatusCodes } from "http-status-codes";
 import { Types } from "mongoose";
 import { envVars } from "../../config/env.js";
 import AppError from "../../errorHelpers/AppError.js";
+import { QueryBuilder } from "../../utils/QueryBuilder.js";
 import { getDistanceInKm, calculateSuggestedFare } from "../../utils/distance.js";
 import { RideStatus, VehicleType } from "./ride.interface.js";
 import { IRide } from "./ride.interface.js";
 import { Ride } from "./ride.model.js";
 
 const createRide = async (payload: Partial<IRide>, riderId: string) => {
-    // Calculate distance using Haversine (from frontend coordinates)
     const distanceInKm = getDistanceInKm(
         payload.from!.lat,
         payload.from!.lng,
@@ -16,17 +16,19 @@ const createRide = async (payload: Partial<IRide>, riderId: string) => {
         payload.to!.lng
     );
 
-    // Calculate system suggested fare based on vehicle type
     const systemSuggestedFare = calculateSuggestedFare(
         distanceInKm,
         payload.vehicleType!
     );
+
+    const proposedFare = payload.proposedFare || systemSuggestedFare;
 
     const ride = await Ride.create({
         ...payload,
         riderId,
         distanceInKm,
         systemSuggestedFare,
+        proposedFare,
         status: RideStatus.PENDING,
     });
 
@@ -34,22 +36,35 @@ const createRide = async (payload: Partial<IRide>, riderId: string) => {
 };
 
 const getAllRides = async (query: Record<string, string>) => {
-    const page = parseInt(query.page as string) || 1;
-    const limit = parseInt(query.limit as string) || 10;
-    const skip = (page - 1) * limit;
+    const q = { ...query };
+    delete q.status;
 
-    const rides = await Ride.find({ status: RideStatus.PENDING })
-        .populate("riderId", "name")
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .select("from to arrivalTime status proposedFare vehicleType riderId distanceInKm systemSuggestedFare");
+    if (q.minFare || q.maxFare) {
+        const fareFilter: Record<string, number> = {};
+        if (q.minFare) fareFilter.$gte = Number(q.minFare);
+        if (q.maxFare) fareFilter.$lte = Number(q.maxFare);
+        q.proposedFare = fareFilter as any;
+    }
+    delete q.minFare;
+    delete q.maxFare;
+
+    const queryBuilder = new QueryBuilder(
+        Ride.find({ status: RideStatus.PENDING }).populate("riderId", "name"),
+        q
+    );
+
+    const rides = await queryBuilder
+        .search(["from.address", "to.address"])
+        .filter()
+        .sort()
+        .paginate()
+        .build();
 
     const sanitizedRides = rides.map((ride) => {
         const rideObj = ride.toObject();
         return {
             _id: rideObj._id,
-            riderName: (rideObj.riderId as any)?.name || "Anonymous",
+            riderId: { name: (rideObj.riderId as any)?.name || "Anonymous" },
             from: { address: rideObj.from.address },
             to: { address: rideObj.to.address },
             arrivalTime: rideObj.arrivalTime,
@@ -61,17 +76,9 @@ const getAllRides = async (query: Record<string, string>) => {
         };
     });
 
-    const total = await Ride.countDocuments({ status: RideStatus.PENDING });
+    const meta = await queryBuilder.countTotal();
 
-    return {
-        data: sanitizedRides,
-        meta: {
-            page,
-            limit,
-            total,
-            totalPage: Math.ceil(total / limit),
-        },
-    };
+    return { data: sanitizedRides, meta };
 };
 
 const getRideById = async (id: string, userId: string) => {
@@ -83,7 +90,6 @@ const getRideById = async (id: string, userId: string) => {
         throw new AppError(StatusCodes.NOT_FOUND, "Ride not found");
     }
 
-    // If ride is accepted, show full details to involved parties
     if (
         ride.status === RideStatus.ACCEPTED ||
         ride.status === RideStatus.IN_PROGRESS ||
@@ -97,9 +103,9 @@ const getRideById = async (id: string, userId: string) => {
         }
     }
 
-    // For non-involved users, return limited info (public view)
     return {
-        riderName: (ride.riderId as any).name,
+        _id: ride._id,
+        riderId: { name: (ride.riderId as any).name || "Anonymous" },
         from: { address: ride.from.address },
         to: { address: ride.to.address },
         arrivalTime: ride.arrivalTime,
@@ -129,7 +135,6 @@ const acceptRide = async (rideId: string, driverId: string) => {
     ride.driverId = new Types.ObjectId(driverId);
     await ride.save();
 
-    // Send notification to rider
     const User = (await import("../user/user.model.js")).User;
     await User.findByIdAndUpdate(ride.riderId, {
         $push: {
@@ -170,7 +175,6 @@ const cancelRide = async (rideId: string, riderId: string) => {
     ride.status = RideStatus.CANCELLED;
     await ride.save();
 
-    // Send notification to driver if accepted
     if (ride.driverId) {
         const User = (await import("../user/user.model.js")).User;
         await User.findByIdAndUpdate(ride.driverId, {
@@ -244,32 +248,28 @@ const completeRide = async (rideId: string, driverId: string) => {
 };
 
 const getMyRides = async (userId: string, query: Record<string, string>) => {
-    const page = parseInt(query.page as string) || 1;
-    const limit = parseInt(query.limit as string) || 10;
-    const skip = (page - 1) * limit;
+    const q = { ...query };
+    delete q.status;
 
-    const rides = await Ride.find({
-        $or: [{ riderId: userId }, { driverId: userId }],
-    })
-        .populate("riderId", "name picture")
-        .populate("driverId", "name picture vehicleType")
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit);
+    const queryBuilder = new QueryBuilder(
+        Ride.find({
+            $or: [{ riderId: userId }, { driverId: userId }],
+        })
+            .populate("riderId", "name picture")
+            .populate("driverId", "name picture vehicleType"),
+        q
+    );
 
-    const total = await Ride.countDocuments({
-        $or: [{ riderId: userId }, { driverId: userId }],
-    });
+    const rides = await queryBuilder
+        .search(["from.address", "to.address"])
+        .filter()
+        .sort()
+        .paginate()
+        .build();
 
-    return {
-        data: rides,
-        meta: {
-            page,
-            limit,
-            total,
-            totalPage: Math.ceil(total / limit),
-        },
-    };
+    const meta = await queryBuilder.countTotal();
+
+    return { data: rides, meta };
 };
 
 const getDriverNotifications = async (

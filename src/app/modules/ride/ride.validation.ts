@@ -17,7 +17,7 @@ export const createRideValidation = z.object({
         VehicleType.BIKE,
         VehicleType.CAR,
     ]),
-    proposedFare: z.number().min(1, "Proposed fare is required"),
+    proposedFare: z.number().min(0).optional(),
 });
 
 export const updateRideStatusValidation = z.object({
