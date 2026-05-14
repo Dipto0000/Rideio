@@ -6,6 +6,7 @@ import { SubscriptionRoutes } from '../modules/subscription/subscription.route.j
 import { ReviewRoutes } from '../modules/review/review.route.js';
 import { DashboardRoutes } from '../modules/dashboard/dashboard.route.js';
 import { AdminRoutes } from '../modules/admin/admin.route.js';
+import { NotificationRoutes } from '../modules/notification/notification.route.js';
 
 const router = Router();
 
@@ -37,6 +38,10 @@ const moduleRoutes: { path: string; route: Router }[] = [
   {
     path: '/admin',
     route: AdminRoutes,
+  },
+  {
+    path: '/notifications',
+    route: NotificationRoutes,
   },
 ];
 

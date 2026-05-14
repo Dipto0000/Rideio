@@ -1,15 +1,41 @@
 import { model, Schema } from "mongoose";
-import { INotification, IUser, Role, SubRole, UserStatus } from "./user.interface.js";
+import {
+    INotification,
+    IUser,
+    Role,
+    SubRole,
+    UserStatus,
+} from "./user.interface.js";
+
+const NOTIFICATION_TYPE_ENUMS = [
+    'RIDE_ACCEPTED',
+    'RIDE_CANCELLED',
+    'RIDE_CANCELLED_BY_DRIVER',
+    'RIDE_STARTED',
+    'RIDE_COMPLETED',
+    'NEW_RIDE_AVAILABLE',
+    'SUBSCRIPTION_EXPIRING',
+    'SUBSCRIPTION_EXPIRED',
+    'NEW_USER_REGISTERED',
+    'PAYMENT_RECEIVED',
+    'RIDE_REPORTED',
+    'ADMIN_CREATED',
+    'USER_DELETED',
+    'ACCOUNT_BLOCKED',
+] as const;
 
 const notificationSchema = new Schema<INotification>(
     {
         message: { type: String, required: true },
-        rideId: { type: Schema.Types.ObjectId, ref: "Ride", required: true },
-        type: { type: String, enum: ['RIDE_CANCELLED', 'RIDE_ACCEPTED'], required: true },
+        rideId: { type: Schema.Types.ObjectId, ref: "Ride" },
+        type: {
+            type: String,
+            required: true,
+            enum: NOTIFICATION_TYPE_ENUMS,
+        },
         isRead: { type: Boolean, default: false },
         createdAt: { type: Date, default: Date.now },
-    },
-    { _id: false }
+    }
 );
 
 const userSchema = new Schema<IUser>(
@@ -55,6 +81,28 @@ const userSchema = new Schema<IUser>(
         dob: { type: Date },
         // Notifications
         notifications: [notificationSchema],
+        notificationSettings: {
+            type: new Schema(
+                {
+                    RIDE_ACCEPTED: { type: Boolean, default: true },
+                    RIDE_CANCELLED: { type: Boolean, default: true },
+                    RIDE_CANCELLED_BY_DRIVER: { type: Boolean, default: true },
+                    RIDE_STARTED: { type: Boolean, default: true },
+                    RIDE_COMPLETED: { type: Boolean, default: true },
+                    NEW_RIDE_AVAILABLE: { type: Boolean, default: true },
+                    SUBSCRIPTION_EXPIRING: { type: Boolean, default: true },
+                    SUBSCRIPTION_EXPIRED: { type: Boolean, default: true },
+                    NEW_USER_REGISTERED: { type: Boolean, default: true },
+                    PAYMENT_RECEIVED: { type: Boolean, default: true },
+                    RIDE_REPORTED: { type: Boolean, default: true },
+                    ADMIN_CREATED: { type: Boolean, default: true },
+                    USER_DELETED: { type: Boolean, default: true },
+                    ACCOUNT_BLOCKED: { type: Boolean, default: true },
+                },
+                { _id: false }
+            ),
+            default: {},
+        },
         // Rating fields (for drivers)
         averageRating: { type: Number, default: 0 },
         totalReviews: { type: Number, default: 0 },

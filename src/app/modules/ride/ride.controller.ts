@@ -71,7 +71,7 @@ export const RideController = {
         sendResponse(res, {
             statusCode: StatusCodes.OK,
             success: true,
-            message: result.message,
+            message: "Ride cancelled successfully",
             data: result,
         });
     }),
@@ -109,7 +109,7 @@ export const RideController = {
     getMyRides: catchAsync(async (req: Request, res: Response) => {
         const user = req.user as IAuthUser;
         const query = req.query as Record<string, string>;
-        const result = await RideServices.getMyRides(user.userId, query);
+        const result = await RideServices.getMyRides(user.userId, query, user.role as unknown as "RIDER" | "DRIVER");
 
         sendResponse(res, {
             statusCode: StatusCodes.OK,
@@ -120,20 +120,4 @@ export const RideController = {
         });
     }),
 
-    getDriverNotifications: catchAsync(async (req: Request, res: Response) => {
-        const user = req.user as IAuthUser;
-        const query = req.query as Record<string, string>;
-        const result = await RideServices.getDriverNotifications(
-            user.userId,
-            query
-        );
-
-        sendResponse(res, {
-            statusCode: StatusCodes.OK,
-            success: true,
-            message: "Notifications retrieved",
-            data: result.data,
-            meta: result.meta,
-        });
-    }),
 };

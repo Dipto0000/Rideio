@@ -1,120 +1,103 @@
 import { StatusCodes } from "http-status-codes";
-import { Types } from "mongoose";
-import { envVars } from "../../config/env.js";
 import AppError from "../../errorHelpers/AppError.js";
-import { QueryBuilder } from "../../utils/QueryBuilder.js";
-import { getDistanceInKm, calculateSuggestedFare } from "../../utils/distance.js";
-import { RideStatus, VehicleType } from "./ride.interface.js";
-import { IRide } from "./ride.interface.js";
 import { Ride } from "./ride.model.js";
+import { QueryBuilder } from "../../utils/QueryBuilder.js";
+import { RideStatus } from "./ride.interface.js";
 
-const createRide = async (payload: Partial<IRide>, riderId: string) => {
-    const distanceInKm = getDistanceInKm(
-        payload.from!.lat,
-        payload.from!.lng,
-        payload.to!.lat,
-        payload.to!.lng
-    );
+const EARTH_RADIUS_KM = 6371;
 
-    const systemSuggestedFare = calculateSuggestedFare(
-        distanceInKm,
-        payload.vehicleType!
-    );
+function toRadians(deg: number): number {
+    return (deg * Math.PI) / 180;
+}
 
-    const proposedFare = payload.proposedFare || systemSuggestedFare;
+function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+    const dLat = toRadians(lat2 - lat1);
+    const dLng = toRadians(lng2 - lng1);
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(toRadians(lat1)) *
+            Math.cos(toRadians(lat2)) *
+            Math.sin(dLng / 2) *
+            Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return EARTH_RADIUS_KM * c;
+}
+
+const PER_KM_RATE = 30; // 30 BDT per km
+
+function calculateSuggestedFare(distanceInKm: number): number {
+    return distanceInKm * PER_KM_RATE;
+}
+
+const createRide = async (payload: Record<string, unknown>, userId: string) => {
+    const { from, to } = payload as {
+        from: { lat: number; lng: number };
+        to: { lat: number; lng: number };
+    };
+
+    const distanceInKm = calculateDistance(from.lat, from.lng, to.lat, to.lng);
+    const systemSuggestedFare = calculateSuggestedFare(distanceInKm);
 
     const ride = await Ride.create({
         ...payload,
-        riderId,
-        distanceInKm,
-        systemSuggestedFare,
-        proposedFare,
-        status: RideStatus.PENDING,
+        riderId: userId,
+        distanceInKm: parseFloat(distanceInKm.toFixed(2)),
+        systemSuggestedFare: parseFloat(systemSuggestedFare.toFixed(2)),
     });
 
     return ride;
 };
 
-const getAllRides = async (query: Record<string, string>) => {
-    const q = { ...query };
-    delete q.status;
-
-    if (q.minFare || q.maxFare) {
-        const fareFilter: Record<string, number> = {};
-        if (q.minFare) fareFilter.$gte = Number(q.minFare);
-        if (q.maxFare) fareFilter.$lte = Number(q.maxFare);
-        q.proposedFare = fareFilter as any;
-    }
-    delete q.minFare;
-    delete q.maxFare;
-
-    const queryBuilder = new QueryBuilder(
-        Ride.find({ status: RideStatus.PENDING }).populate("riderId", "name"),
-        q
-    );
-
-    const rides = await queryBuilder
+const getAllRides = async (query: Record<string, unknown>) => {
+    const rideQuery = new QueryBuilder(
+        Ride.find({ status: "PENDING" }).populate(
+            "riderId",
+            "name picture phone"
+        ),
+        query
+    )
         .search(["from.address", "to.address"])
         .filter()
         .sort()
         .paginate()
-        .build();
+        .fields();
 
-    const sanitizedRides = rides.map((ride) => {
-        const rideObj = ride.toObject();
-        return {
-            _id: rideObj._id,
-            riderId: { name: (rideObj.riderId as any)?.name || "Anonymous" },
-            from: { address: rideObj.from.address },
-            to: { address: rideObj.to.address },
-            arrivalTime: rideObj.arrivalTime,
-            status: rideObj.status,
-            proposedFare: rideObj.proposedFare,
-            vehicleType: rideObj.vehicleType,
-            distanceInKm: rideObj.distanceInKm,
-            systemSuggestedFare: rideObj.systemSuggestedFare,
-        };
-    });
+    const [data, meta] = await Promise.all([
+        rideQuery.modelQuery,
+        rideQuery.countTotal(),
+    ]);
 
-    const meta = await queryBuilder.countTotal();
-
-    return { data: sanitizedRides, meta };
+    return { data, meta };
 };
 
-const getRideById = async (id: string, userId: string) => {
+const getRideById = async (id: string, userId?: string) => {
     const ride = await Ride.findById(id)
-        .populate("riderId", "name phone picture")
-        .populate("driverId", "name phone picture vehicleType numberplate");
+        .populate("riderId", "name picture phone")
+        .populate(
+            "driverId",
+            "name picture phone numberplate vehicleType averageRating totalReviews"
+        );
 
     if (!ride) {
         throw new AppError(StatusCodes.NOT_FOUND, "Ride not found");
     }
 
-    if (
-        ride.status === RideStatus.ACCEPTED ||
-        ride.status === RideStatus.IN_PROGRESS ||
-        ride.status === RideStatus.COMPLETED
-    ) {
-        const riderIdStr = (ride.riderId as any)._id?.toString();
-        const driverIdStr = ride.driverId?.toString();
-
-        if (userId === riderIdStr || userId === driverIdStr) {
-            return ride;
+    // If there's an authenticated user, check if they're the rider or driver
+    if (userId) {
+        const isRider = ride.riderId?._id?.toString() === userId;
+        const isDriver = ride.driverId?._id?.toString() === userId;
+        if (!isRider && !isDriver) {
+            // Strip sensitive fields for non-participants
+            ride.riderId = undefined as any;
+            ride.driverId = undefined as any;
         }
+    } else {
+        // Unauthenticated users see only basic info
+        ride.riderId = undefined as any;
+        ride.driverId = undefined as any;
     }
 
-    return {
-        _id: ride._id,
-        riderId: { name: (ride.riderId as any).name || "Anonymous" },
-        from: { address: ride.from.address },
-        to: { address: ride.to.address },
-        arrivalTime: ride.arrivalTime,
-        status: ride.status,
-        proposedFare: ride.proposedFare,
-        vehicleType: ride.vehicleType,
-        distanceInKm: ride.distanceInKm,
-        systemSuggestedFare: ride.systemSuggestedFare,
-    };
+    return ride;
 };
 
 const acceptRide = async (rideId: string, driverId: string) => {
@@ -124,73 +107,90 @@ const acceptRide = async (rideId: string, driverId: string) => {
         throw new AppError(StatusCodes.NOT_FOUND, "Ride not found");
     }
 
-    if (ride.status !== RideStatus.PENDING) {
-        throw new AppError(
-            StatusCodes.BAD_REQUEST,
-            `Ride is already ${ride.status}`
-        );
+    if (ride.status !== "PENDING") {
+        throw new AppError(StatusCodes.BAD_REQUEST, "Ride is not available");
     }
 
+    ride.driverId = driverId as any;
     ride.status = RideStatus.ACCEPTED;
-    ride.driverId = new Types.ObjectId(driverId);
     await ride.save();
 
-    const User = (await import("../user/user.model.js")).User;
-    await User.findByIdAndUpdate(ride.riderId, {
-        $push: {
-            notifications: {
-                message: `Your ride has been accepted by a driver`,
-                rideId: ride._id,
-                type: "RIDE_ACCEPTED",
-                isRead: false,
-                createdAt: new Date(),
-            },
-        },
-    });
+    // Notify rider that their ride has been accepted
+    const { NotificationServices } = await import(
+        "../notification/notification.service.js"
+    );
+    await NotificationServices.pushNotification(
+        ride.riderId.toString(),
+        {
+            message: `Your ride has been accepted by a driver`,
+            type: "RIDE_ACCEPTED",
+            rideId: ride._id.toString(),
+        }
+    );
 
     return ride;
 };
 
-const cancelRide = async (rideId: string, riderId: string) => {
+const cancelRide = async (rideId: string, userId: string) => {
     const ride = await Ride.findById(rideId);
 
     if (!ride) {
         throw new AppError(StatusCodes.NOT_FOUND, "Ride not found");
     }
 
-    if (ride.riderId.toString() !== riderId) {
+    const isRider = ride.riderId.toString() === userId;
+    const isDriver = ride.driverId?.toString() === userId;
+
+    if (!isRider && !isDriver) {
+        throw new AppError(StatusCodes.FORBIDDEN, "You are not authorized");
+    }
+
+    // Cannot cancel completed or already-cancelled rides
+    if (
+        ride.status === RideStatus.COMPLETED ||
+        ride.status === RideStatus.CANCELLED
+    ) {
         throw new AppError(
-            StatusCodes.FORBIDDEN,
-            "Only the rider can cancel this ride"
+            StatusCodes.BAD_REQUEST,
+            "Ride cannot be cancelled"
         );
     }
 
-    if (ride.status !== RideStatus.PENDING && ride.status !== RideStatus.ACCEPTED) {
+    // Driver: never allowed to cancel once they've accepted
+    if (isDriver) {
+        throw new AppError(
+            StatusCodes.FORBIDDEN,
+            "Driver cannot cancel a ride once accepted"
+        );
+    }
+
+    // Rider: cannot cancel mid-travel
+    if (isRider && ride.status === RideStatus.IN_PROGRESS) {
         throw new AppError(
             StatusCodes.BAD_REQUEST,
-            "Ride can only be cancelled before it starts"
+            "Cannot cancel a ride that is already in progress"
         );
     }
 
     ride.status = RideStatus.CANCELLED;
     await ride.save();
 
+    // Notify driver that the rider cancelled
     if (ride.driverId) {
-        const User = (await import("../user/user.model.js")).User;
-        await User.findByIdAndUpdate(ride.driverId, {
-            $push: {
-                notifications: {
-                    message: `Rider has cancelled the ride`,
-                    rideId: ride._id,
-                    type: "RIDE_CANCELLED",
-                    isRead: false,
-                    createdAt: new Date(),
-                },
-            },
-        });
+        const { NotificationServices } = await import(
+            "../notification/notification.service.js"
+        );
+        await NotificationServices.pushNotification(
+            ride.driverId.toString(),
+            {
+                message: `Rider has cancelled the ride`,
+                type: "RIDE_CANCELLED",
+                rideId: ride._id.toString(),
+            }
+        );
     }
 
-    return { message: "Ride cancelled successfully" };
+    return ride;
 };
 
 const startRide = async (rideId: string, driverId: string) => {
@@ -200,22 +200,35 @@ const startRide = async (rideId: string, driverId: string) => {
         throw new AppError(StatusCodes.NOT_FOUND, "Ride not found");
     }
 
-    if (ride.driverId?.toString() !== driverId) {
-        throw new AppError(
-            StatusCodes.FORBIDDEN,
-            "Only the assigned driver can start this ride"
-        );
-    }
-
-    if (ride.status !== RideStatus.ACCEPTED) {
+    if (ride.status !== "ACCEPTED") {
         throw new AppError(
             StatusCodes.BAD_REQUEST,
             "Ride must be accepted before starting"
         );
     }
 
+    if (ride.driverId?.toString() !== driverId) {
+        throw new AppError(
+            StatusCodes.FORBIDDEN,
+            "You are not the assigned driver"
+        );
+    }
+
     ride.status = RideStatus.IN_PROGRESS;
     await ride.save();
+
+    // Notify rider that ride has started
+    const { NotificationServices } = await import(
+        "../notification/notification.service.js"
+    );
+    await NotificationServices.pushNotification(
+        ride.riderId.toString(),
+        {
+            message: `Your ride has started`,
+            type: "RIDE_STARTED",
+            rideId: ride._id.toString(),
+        }
+    );
 
     return ride;
 };
@@ -227,77 +240,65 @@ const completeRide = async (rideId: string, driverId: string) => {
         throw new AppError(StatusCodes.NOT_FOUND, "Ride not found");
     }
 
-    if (ride.driverId?.toString() !== driverId) {
-        throw new AppError(
-            StatusCodes.FORBIDDEN,
-            "Only the assigned driver can complete this ride"
-        );
-    }
-
-    if (ride.status !== RideStatus.IN_PROGRESS) {
+    if (ride.status !== "IN_PROGRESS") {
         throw new AppError(
             StatusCodes.BAD_REQUEST,
             "Ride must be in progress before completing"
         );
     }
 
+    if (ride.driverId?.toString() !== driverId) {
+        throw new AppError(
+            StatusCodes.FORBIDDEN,
+            "You are not the assigned driver"
+        );
+    }
+
     ride.status = RideStatus.COMPLETED;
     await ride.save();
+
+    // Notify rider that ride is completed
+    const { NotificationServices } = await import(
+        "../notification/notification.service.js"
+    );
+    await NotificationServices.pushNotification(
+        ride.riderId.toString(),
+        {
+            message: `Your ride has been completed`,
+            type: "RIDE_COMPLETED",
+            rideId: ride._id.toString(),
+        }
+    );
 
     return ride;
 };
 
-const getMyRides = async (userId: string, query: Record<string, string>) => {
-    const q = { ...query };
-    delete q.status;
-
-    const queryBuilder = new QueryBuilder(
-        Ride.find({
-            $or: [{ riderId: userId }, { driverId: userId }],
-        })
-            .populate("riderId", "name picture")
-            .populate("driverId", "name picture vehicleType"),
-        q
-    );
-
-    const rides = await queryBuilder
-        .search(["from.address", "to.address"])
-        .filter()
-        .sort()
-        .paginate()
-        .build();
-
-    const meta = await queryBuilder.countTotal();
-
-    return { data: rides, meta };
-};
-
-const getDriverNotifications = async (
-    driverId: string,
-    query: Record<string, string>
+const getMyRides = async (
+    userId: string,
+    query: Record<string, string>,
+    role: "RIDER" | "DRIVER"
 ) => {
-    const User = (await import("../user/user.model.js")).User;
-    const user = await User.findById(driverId).select("notifications");
-
-    if (!user) {
-        throw new AppError(StatusCodes.NOT_FOUND, "User not found");
-    }
-
-    const page = parseInt(query.page as string) || 1;
-    const limit = parseInt(query.limit as string) || 10;
+    const page = Math.max(1, parseInt(query.page || "1"));
+    const limit = Math.min(50, Math.max(1, parseInt(query.limit || "10")));
     const skip = (page - 1) * limit;
 
-    const notifications = user.notifications
-        .sort(
-            (a: any, b: any) =>
-                new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        )
-        .slice(skip, skip + limit);
+    const filterField = role === "RIDER" ? "riderId" : "driverId";
 
-    const total = user.notifications.length;
+    const [rides, total] = await Promise.all([
+        Ride.find({ [filterField]: userId })
+            .populate("riderId", "name picture phone")
+            .populate(
+                "driverId",
+                "name picture phone numberplate vehicleType averageRating totalReviews"
+            )
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit),
+        Ride.countDocuments({ [filterField]: userId }),
+    ]);
 
     return {
-        data: notifications,
+        data: rides,
         meta: {
             page,
             limit,
@@ -316,5 +317,4 @@ export const RideServices = {
     startRide,
     completeRide,
     getMyRides,
-    getDriverNotifications,
 };

@@ -25,6 +25,14 @@ router.get(
 
 router.get('/me', checkAuth(), UserController.getMe);
 
+router.post(
+    '/me/photo',
+    checkAuth(),
+    parseFormData,
+    multerUpload.single('profilePicture'),
+    UserController.uploadProfilePhoto
+);
+
 router.get('/:id', checkAuth(), UserController.getSingleUser);
 
 router.patch(

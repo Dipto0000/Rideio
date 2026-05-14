@@ -50,11 +50,6 @@ router.patch(
     RideController.completeRide
 );
 
-router.get(
-    "/driver/notifications",
-    checkAuth(),
-    checkSubscription,
-    RideController.getDriverNotifications
-);
+
 
 export const RideRoutes = router;
