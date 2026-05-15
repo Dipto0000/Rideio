@@ -60,6 +60,11 @@ const handleGoogleAuth = async (payload: { email: string; name: string; googleId
     let user = await User.findOne({ email });
 
     if (user) {
+        // 🔴 Block DRIVER users from using Google auth — drivers must use credentials
+        if (user.subRole === SubRole.DRIVER) {
+            throw new AppError(StatusCodes.BAD_REQUEST, "Drivers must sign in with email and password. Google login is not available for driver accounts.");
+        }
+
         const hasGoogleAuth = user.auths.some((auth) => auth.provider === "google");
         if (!hasGoogleAuth) {
             user.auths.push({ provider: "google", providerId: googleId } as IAuthProvider);
@@ -69,6 +74,8 @@ const handleGoogleAuth = async (payload: { email: string; name: string; googleId
             if (phone) user.phone = phone;
             if (address) user.address = address;
             if (dob && !user.dob) user.dob = new Date(dob);
+            // ✅ Google-verified email → auto-verify unverified users
+            if (!user.isVerified) user.isVerified = true;
             await user.save();
         }
     } else {
