@@ -57,7 +57,7 @@ const createRide = async (payload: Record<string, unknown>, userId: string) => {
 
 const getAllRides = async (query: Record<string, unknown>) => {
     const rideQuery = new QueryBuilder(
-        Ride.find({ status: "PENDING" }),
+        Ride.find({ status: "PENDING" }).populate("riderId", "name picture"),
         query
     )
         .search(["from.address", "to.address"])
@@ -91,8 +91,16 @@ const getRideById = async (id: string, userId?: string) => {
         const isRider = ride.riderId?._id?.toString() === userId;
         const isDriver = ride.driverId?._id?.toString() === userId;
         if (!isRider && !isDriver) {
-            // Strip sensitive fields for non-participants
-            ride.riderId = undefined as any;
+            // Non-participants (e.g. driver browsing): show rider name + picture, hide phone
+            if (ride.riderId && typeof ride.riderId === "object") {
+                const rider = ride.riderId as unknown as { _id: unknown; name: string; picture?: string };
+                ride.riderId = {
+                    _id: rider._id,
+                    name: rider.name,
+                    picture: rider.picture,
+                } as any;
+            }
+            // Always hide driver info from non-participants
             ride.driverId = undefined as any;
         }
     } else {
