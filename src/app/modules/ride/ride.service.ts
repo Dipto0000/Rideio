@@ -1,6 +1,7 @@
 import { StatusCodes } from "http-status-codes";
 import AppError from "../../errorHelpers/AppError.js";
 import { Ride } from "./ride.model.js";
+import { User } from "../user/user.model.js";
 import { QueryBuilder } from "../../utils/QueryBuilder.js";
 import { RideStatus } from "./ride.interface.js";
 
@@ -30,13 +31,19 @@ function calculateSuggestedFare(distanceInKm: number): number {
 }
 
 const createRide = async (payload: Record<string, unknown>, userId: string) => {
-    const { from, to } = payload as {
+    const { from, to, phone } = payload as {
         from: { lat: number; lng: number };
         to: { lat: number; lng: number };
+        phone?: string;
     };
 
     const distanceInKm = calculateDistance(from.lat, from.lng, to.lat, to.lng);
     const systemSuggestedFare = calculateSuggestedFare(distanceInKm);
+
+    // Update rider's phone number if provided
+    if (phone) {
+        await User.findByIdAndUpdate(userId, { phone });
+    }
 
     const ride = await Ride.create({
         ...payload,
@@ -50,10 +57,7 @@ const createRide = async (payload: Record<string, unknown>, userId: string) => {
 
 const getAllRides = async (query: Record<string, unknown>) => {
     const rideQuery = new QueryBuilder(
-        Ride.find({ status: "PENDING" }).populate(
-            "riderId",
-            "name picture phone"
-        ),
+        Ride.find({ status: "PENDING" }),
         query
     )
         .search(["from.address", "to.address"])

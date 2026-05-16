@@ -26,6 +26,8 @@ interface EnvConfig {
     SSL_CANCEL_URL: string;
     SSL_FAIL_URL: string;
     SSL_IPN_URL: string;
+    SUPER_ADMIN_EMAIL?: string;
+    SUPER_ADMIN_PASSWORD?: string;
 }
 
 const loadEnvVariables = (): EnvConfig => {
@@ -35,7 +37,7 @@ const loadEnvVariables = (): EnvConfig => {
         "MAILTRAP_HOST", "MAILTRAP_PORT", "MAILTRAP_USER", "MAILTRAP_PASS",
         "CLOUDINARY_CLOUD_NAME", "CLOUDINARY_API_KEY", "CLOUDINARY_API_SECRET",
         "SSL_STORE_ID", "SSL_STORE_PASSWORD", "SSL_IS_SANDBOX",
-        "SSL_SUCCESS_URL", "SSL_CANCEL_URL", "SSL_FAIL_URL", "SSL_IPN_URL"
+        "SSL_SUCCESS_URL", "SSL_CANCEL_URL", "SSL_FAIL_URL",        "SSL_IPN_URL"
     ];
 
     requiredEnvVariables.forEach(key => {
@@ -68,6 +70,8 @@ const loadEnvVariables = (): EnvConfig => {
         SSL_CANCEL_URL: process.env.SSL_CANCEL_URL!,
         SSL_FAIL_URL: process.env.SSL_FAIL_URL!,
         SSL_IPN_URL: process.env.SSL_IPN_URL!,
+        SUPER_ADMIN_EMAIL: process.env.SUPER_ADMIN_EMAIL,
+        SUPER_ADMIN_PASSWORD: process.env.SUPER_ADMIN_PASSWORD,
     };
 }
 

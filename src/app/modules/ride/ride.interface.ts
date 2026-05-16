@@ -28,8 +28,7 @@ export interface IRide {
     arrivalTime: Date;
     vehicleType: VehicleType; // Rider's preference (bike or car)
     status: RideStatus;
-    proposedFare: number; // What rider is willing to pay
-    systemSuggestedFare?: number; // Calculated by backend
+    systemSuggestedFare: number; // Calculated by backend
     distanceInKm?: number; // Calculated via Haversine
     isDeleted: boolean;
     createdAt?: Date;

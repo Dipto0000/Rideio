@@ -34,15 +34,15 @@ const getDriverDashboard = async (driverId: string) => {
     }
 
     const [completedRides, recentRides] = await Promise.all([
-        Ride.find({ driverId, status: RideStatus.COMPLETED }).select("proposedFare"),
+        Ride.find({ driverId, status: RideStatus.COMPLETED }).select("systemSuggestedFare"),
         Ride.find({ driverId })
             .populate("riderId", "name picture")
             .sort({ createdAt: -1 })
             .limit(10)
-            .select("from to status proposedFare createdAt"),
+            .select("from to status systemSuggestedFare createdAt"),
     ]);
 
-    const totalEarnings = completedRides.reduce((sum, ride) => sum + (ride.proposedFare || 0), 0);
+    const totalEarnings = completedRides.reduce((sum, ride) => sum + (ride.systemSuggestedFare || 0), 0);
 
     const result = {
         totalEarnings,
@@ -59,7 +59,7 @@ const getDriverDashboard = async (driverId: string) => {
             from: { address: ride.from.address },
             to: { address: ride.to.address },
             status: ride.status,
-            proposedFare: ride.proposedFare,
+            systemSuggestedFare: ride.systemSuggestedFare,
             createdAt: ride.createdAt,
         })),
     };
@@ -82,7 +82,7 @@ const getRiderDashboard = async (riderId: string) => {
             .populate("driverId", "name picture vehicleType averageRating")
             .sort({ createdAt: -1 })
             .limit(10)
-            .select("from to status proposedFare vehicleType createdAt driverId"),
+            .select("from to status systemSuggestedFare vehicleType createdAt driverId"),
     ]);
 
     const result = {
@@ -97,7 +97,7 @@ const getRiderDashboard = async (riderId: string) => {
                 from: { address: rideObj.from.address },
                 to: { address: rideObj.to.address },
                 status: rideObj.status,
-                proposedFare: rideObj.proposedFare,
+                systemSuggestedFare: rideObj.systemSuggestedFare,
                 vehicleType: rideObj.vehicleType,
                 driverName: rideObj.driverId?.name || null,
                 driverRating: rideObj.driverId?.averageRating || null,
@@ -140,7 +140,7 @@ const getAdminDashboard = async () => {
             .populate("driverId", "name")
             .sort({ createdAt: -1 })
             .limit(10)
-            .select("from to status proposedFare createdAt"),
+            .select("from to status systemSuggestedFare createdAt"),
     ]);
 
     const ridesByStatusMap: Record<string, number> = {};
@@ -169,7 +169,7 @@ const getAdminDashboard = async () => {
                 from: { address: rideObj.from.address },
                 to: { address: rideObj.to.address },
                 status: rideObj.status,
-                proposedFare: rideObj.proposedFare,
+                systemSuggestedFare: rideObj.systemSuggestedFare,
                 riderName: (rideObj.riderId as any)?.name || "Anonymous",
                 driverName: (rideObj.driverId as any)?.name || null,
                 createdAt: rideObj.createdAt,

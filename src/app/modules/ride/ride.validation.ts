@@ -17,7 +17,7 @@ export const createRideValidation = z.object({
         VehicleType.BIKE,
         VehicleType.CAR,
     ]),
-    proposedFare: z.number().min(0).optional(),
+    phone: z.string().optional(),
 });
 
 export const updateRideStatusValidation = z.object({
