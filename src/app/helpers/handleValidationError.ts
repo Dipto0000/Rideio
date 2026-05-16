@@ -9,7 +9,7 @@ export const handleValidationError = (err: any) => {
     };
   });
   const errorMessages = errors.map((e) => e.message).join(', ');
-  const message = `Validation failed: ${errorMessages}`;
+  const message = errorMessages || 'Please check your input and try again.';
   return {
     statusCode: StatusCodes.BAD_REQUEST,
     message,

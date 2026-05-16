@@ -50,9 +50,9 @@ export const globalErrorHandler = (
     statusCode = err.statusCode;
     message = err.message;
   }
-  // Native Error
+  // Native Error — don't expose raw JS error messages to users
   else if (err instanceof Error) {
-    message = err.message;
+    message = 'Something went wrong. Please try again later.';
   }
 
   sendResponse(res, {
