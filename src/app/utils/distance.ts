@@ -20,14 +20,14 @@ export const getDistanceInKm = (
     return R * c;
 };
 
-// Fare calculation (Hybrid: System suggests, rider decides)
+// Fare calculation (System suggests)
 // Bike: 50 BDT base + 15 BDT/km
-// Car: 50 BDT base + 50 BDT/km
+// Car: 100 BDT base + 50 BDT/km
 export const calculateSuggestedFare = (
     distanceInKm: number,
     vehicleType: VehicleType
 ): number => {
-    const BASE_FARE = 50; // Same for both
+    const BASE_FARE = vehicleType === VehicleType.BIKE ? 50 : 100;
     const RATE_PER_KM = vehicleType === VehicleType.BIKE ? 15 : 50;
     return Math.round(BASE_FARE + distanceInKm * RATE_PER_KM);
 };

@@ -3,42 +3,19 @@ import AppError from "../../errorHelpers/AppError.js";
 import { Ride } from "./ride.model.js";
 import { User } from "../user/user.model.js";
 import { QueryBuilder } from "../../utils/QueryBuilder.js";
-import { RideStatus } from "./ride.interface.js";
-
-const EARTH_RADIUS_KM = 6371;
-
-function toRadians(deg: number): number {
-    return (deg * Math.PI) / 180;
-}
-
-function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
-    const dLat = toRadians(lat2 - lat1);
-    const dLng = toRadians(lng2 - lng1);
-    const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(toRadians(lat1)) *
-            Math.cos(toRadians(lat2)) *
-            Math.sin(dLng / 2) *
-            Math.sin(dLng / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return EARTH_RADIUS_KM * c;
-}
-
-const PER_KM_RATE = 30; // 30 BDT per km
-
-function calculateSuggestedFare(distanceInKm: number): number {
-    return distanceInKm * PER_KM_RATE;
-}
+import { RideStatus, VehicleType } from "./ride.interface.js";
+import { getDistanceInKm, calculateSuggestedFare } from "../../utils/distance.js";
 
 const createRide = async (payload: Record<string, unknown>, userId: string) => {
-    const { from, to, phone } = payload as {
+    const { from, to, phone, vehicleType } = payload as {
         from: { lat: number; lng: number };
         to: { lat: number; lng: number };
         phone?: string;
+        vehicleType: VehicleType;
     };
 
-    const distanceInKm = calculateDistance(from.lat, from.lng, to.lat, to.lng);
-    const systemSuggestedFare = calculateSuggestedFare(distanceInKm);
+    const distanceInKm = getDistanceInKm(from.lat, from.lng, to.lat, to.lng);
+    const systemSuggestedFare = calculateSuggestedFare(distanceInKm, vehicleType);
 
     // Update rider's phone number if provided
     if (phone) {
