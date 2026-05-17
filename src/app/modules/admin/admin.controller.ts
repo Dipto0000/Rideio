@@ -1,6 +1,7 @@
 import { StatusCodes } from "http-status-codes";
 import { catchAsync } from "../../utils/catchAsync.js";
 import { sendResponse } from "../../utils/sendResponse.js";
+import AppError from "../../errorHelpers/AppError.js";
 import { AdminServices } from "./admin.service.js";
 
 const getAllUsers = catchAsync(async (req, res) => {
@@ -31,7 +32,7 @@ const getAllRides = catchAsync(async (req, res) => {
 
 const softDeleteUser = catchAsync(async (req, res) => {
     if (!req.user) {
-        throw new Error("User not authenticated");
+        throw new AppError(StatusCodes.UNAUTHORIZED, "User not authenticated");
     }
 
     const result = await AdminServices.softDeleteUser(req.params.id as string, req.user.userId, req.body.reason);
@@ -45,7 +46,7 @@ const softDeleteUser = catchAsync(async (req, res) => {
 
 const softDeleteRide = catchAsync(async (req, res) => {
     if (!req.user) {
-        throw new Error("User not authenticated");
+        throw new AppError(StatusCodes.UNAUTHORIZED, "User not authenticated");
     }
 
     const result = await AdminServices.softDeleteRide(req.params.id as string, req.user.userId, req.body.reason);
@@ -72,7 +73,7 @@ const getAllSubscriptions = catchAsync(async (req, res) => {
 
 const updateSubscriptionStatus = catchAsync(async (req, res) => {
     if (!req.user) {
-        throw new Error("User not authenticated");
+        throw new AppError(StatusCodes.UNAUTHORIZED, "User not authenticated");
     }
 
     const result = await AdminServices.updateSubscriptionStatus(req.params.id as string, req.body.status, req.user.userId);
@@ -87,7 +88,7 @@ const updateSubscriptionStatus = catchAsync(async (req, res) => {
 
 const createAdmin = catchAsync(async (req, res) => {
     if (!req.user) {
-        throw new Error("User not authenticated");
+        throw new AppError(StatusCodes.UNAUTHORIZED, "User not authenticated");
     }
 
     const result = await AdminServices.createAdmin(req.body, req.user.userId);
@@ -102,7 +103,7 @@ const createAdmin = catchAsync(async (req, res) => {
 
 const removeAdmin = catchAsync(async (req, res) => {
     if (!req.user) {
-        throw new Error("User not authenticated");
+        throw new AppError(StatusCodes.UNAUTHORIZED, "User not authenticated");
     }
 
     const result = await AdminServices.removeAdmin(req.params.id as string, req.user.userId);

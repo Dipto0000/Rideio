@@ -40,7 +40,7 @@ const notificationSchema = new Schema<INotification>(
 
 const userSchema = new Schema<IUser>(
     {
-        name: { type: String, required: true },
+        name: { type: String, required: true, maxlength: 100 },
         email: { type: String, required: true, unique: true },
         password: { type: String, select: 0 },
         role: {
@@ -54,8 +54,8 @@ const userSchema = new Schema<IUser>(
             default: SubRole.RIDER,
         },
         picture: { type: String },
-        phone: { type: String },
-        address: { type: String },
+        phone: { type: String, maxlength: 20 },
+        address: { type: String, maxlength: 500 },
         status: {
             type: String,
             enum: Object.values(UserStatus),
@@ -76,8 +76,8 @@ const userSchema = new Schema<IUser>(
         },
         // Driver-specific fields
         vehicleType: { type: String, enum: ['bike', 'car'] },
-        numberplate: { type: String },
-        licenseNumber: { type: String },
+        numberplate: { type: String, maxlength: 20 },
+        licenseNumber: { type: String, maxlength: 50 },
         dob: { type: Date },
         // Notifications
         notifications: [notificationSchema],
@@ -113,5 +113,13 @@ const userSchema = new Schema<IUser>(
         versionKey: false,
     }
 );
+
+// Auto-filter soft-deleted documents
+userSchema.pre("find", function () {
+    this.where({ isDeleted: { $ne: true } });
+});
+userSchema.pre("findOne", function () {
+    this.where({ isDeleted: { $ne: true } });
+});
 
 export const User = model<IUser>("User", userSchema);

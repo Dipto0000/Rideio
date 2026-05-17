@@ -5,7 +5,7 @@ import { envVars } from "../../config/env.js";
 import AppError from "../../errorHelpers/AppError.js";
 import { sendEmail } from "../../utils/sendEmail.js";
 import { createNewAccessTokenWithRefreshToken, createUserTokens } from "../../utils/usertokens.js";
-import { IAuthProvider, IsActive, IUser, Role, SubRole } from "../user/user.interface.js";
+import { IAuthProvider, UserStatus, IUser, Role, SubRole } from "../user/user.interface.js";
 import { User } from "../user/user.model.js";
 
 const credentialsLogin = async (payload: { email: string; password: string }) => {
@@ -31,7 +31,7 @@ const credentialsLogin = async (payload: { email: string; password: string }) =>
         throw new AppError(StatusCodes.BAD_REQUEST, "Please verify your email first");
     }
 
-    if (user.status === IsActive.BLOCKED || user.status === IsActive.INACTIVE) {
+    if (user.status === UserStatus.BLOCKED || user.status === UserStatus.INACTIVE) {
         throw new AppError(StatusCodes.BAD_REQUEST, `User is ${user.status}`);
     }
 
@@ -90,7 +90,7 @@ const handleGoogleAuth = async (payload: { email: string; name: string; googleId
             subRole: SubRole.RIDER,
             isVerified: true, // Google users are auto-verified
             auths: [{ provider: "google", providerId: googleId } as IAuthProvider],
-            status: IsActive.ACTIVE,
+            status: UserStatus.ACTIVE,
             isDeleted: false,
             subscription: { isSubscribed: false },
         });
@@ -155,7 +155,7 @@ const registerWithCredentials = async (payload: {
         role,
         subRole,
         isVerified: false, // Requires email verification
-        status: IsActive.ACTIVE,
+        status: UserStatus.ACTIVE,
         isDeleted: false,
         subscription: { isSubscribed: false },
     };
@@ -181,7 +181,7 @@ const registerWithCredentials = async (payload: {
     // Generate verification token
     const verificationToken = jwt.sign(
         { userId: user._id, email: user.email },
-        envVars.JWT_ACCESS_SECRET,
+        envVars.JWT_VERIFICATION_SECRET,
         { expiresIn: "10m" }
     );
 
@@ -213,7 +213,7 @@ const registerWithCredentials = async (payload: {
 
 const verifyEmail = async (token: string) => {
     try {
-        const decoded = jwt.verify(token, envVars.JWT_ACCESS_SECRET) as JwtPayload;
+        const decoded = jwt.verify(token, envVars.JWT_VERIFICATION_SECRET) as JwtPayload;
         const user = await User.findById(decoded.userId);
 
         if (!user) {
@@ -275,7 +275,7 @@ const resendConfirmation = async (email: string) => {
 
     const verificationToken = jwt.sign(
         { userId: user._id, email: user.email },
-        envVars.JWT_ACCESS_SECRET,
+        envVars.JWT_VERIFICATION_SECRET,
         { expiresIn: "10m" }
     );
 
@@ -283,14 +283,14 @@ const resendConfirmation = async (email: string) => {
     user.verificationTokenExpiry = new Date(Date.now() + 10 * 60 * 1000);
     await user.save();
 
-    const confirmLink = `${envVars.FRONTEND_URL}/verify-email?token=${verificationToken}`;
+    const verifyLink = `${envVars.FRONTEND_URL}/auth/verify?token=${verificationToken}`;
     await sendEmail({
         to: user.email,
         subject: "Confirm Your Email - Rideio",
         templateName: "confirmEmail",
         templateData: {
             name: user.name,
-            confirmLink,
+            verifyLink,
         },
     });
 
@@ -308,7 +308,7 @@ const forgotPassword = async (email: string) => {
         throw new AppError(StatusCodes.BAD_REQUEST, "User is not verified");
     }
 
-    if (user.status === IsActive.BLOCKED || user.status === IsActive.INACTIVE) {
+    if (user.status === UserStatus.BLOCKED || user.status === UserStatus.INACTIVE) {
         throw new AppError(StatusCodes.BAD_REQUEST, `User is ${user.status}`);
     }
 
@@ -318,7 +318,7 @@ const forgotPassword = async (email: string) => {
 
     const resetToken = jwt.sign(
         { userId: user._id, email: user.email },
-        envVars.JWT_ACCESS_SECRET,
+        envVars.JWT_VERIFICATION_SECRET,
         { expiresIn: "10m" }
     );
 
@@ -339,7 +339,7 @@ const forgotPassword = async (email: string) => {
 
 const resetPassword = async (payload: { newPassword: string; token: string }) => {
     try {
-        const decoded = jwt.verify(payload.token, envVars.JWT_ACCESS_SECRET) as JwtPayload;
+        const decoded = jwt.verify(payload.token, envVars.JWT_VERIFICATION_SECRET) as JwtPayload;
         const user = await User.findById(decoded.userId).select("+password");
 
         if (!user) {

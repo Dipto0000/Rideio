@@ -34,4 +34,17 @@ const paymentSchema = new Schema<IPayment>(
 );
 
 export const SubscriptionPlan = model<ISubscriptionPlan>("SubscriptionPlan", subscriptionPlanSchema);
+
+// Auto-filter soft-deleted documents
+paymentSchema.pre("find", function () {
+    this.where({ isDeleted: { $ne: true } });
+});
+paymentSchema.pre("findOne", function () {
+    this.where({ isDeleted: { $ne: true } });
+});
+
+// Indexes for common query patterns
+paymentSchema.index({ userId: 1, status: 1 });
+paymentSchema.index({ userId: 1, planType: 1, status: 1 });
+
 export const Payment = model<IPayment>("Payment", paymentSchema);

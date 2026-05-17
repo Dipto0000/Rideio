@@ -32,10 +32,10 @@ export const RideController = {
     }),
 
     getRideById: catchAsync(async (req: Request, res: Response) => {
-        const user = req.user as IAuthUser;
+        const user = req.user as IAuthUser | undefined;
         const result = await RideServices.getRideById(
             req.params.id as string,
-            user?.userId || ""
+            user?.userId
         );
 
         sendResponse(res, {
@@ -109,7 +109,7 @@ export const RideController = {
     getMyRides: catchAsync(async (req: Request, res: Response) => {
         const user = req.user as IAuthUser;
         const query = req.query as Record<string, string>;
-        const result = await RideServices.getMyRides(user.userId, query, user.role as unknown as "RIDER" | "DRIVER");
+        const result = await RideServices.getMyRides(user.userId, query, user.subRole as "RIDER" | "DRIVER");
 
         sendResponse(res, {
             statusCode: StatusCodes.OK,

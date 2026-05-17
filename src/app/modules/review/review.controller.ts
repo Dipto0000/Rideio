@@ -1,11 +1,12 @@
 import { StatusCodes } from "http-status-codes";
 import { catchAsync } from "../../utils/catchAsync.js";
 import { sendResponse } from "../../utils/sendResponse.js";
+import AppError from "../../errorHelpers/AppError.js";
 import { ReviewServices } from "./review.service.js";
 
 const createReview = catchAsync(async (req, res) => {
     if (!req.user) {
-        throw new Error("User not authenticated");
+        throw new AppError(StatusCodes.UNAUTHORIZED, "User not authenticated");
     }
 
     const result = await ReviewServices.createReview(req.body, req.user.userId);

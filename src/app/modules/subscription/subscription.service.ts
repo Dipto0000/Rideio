@@ -221,9 +221,9 @@ const verifySSLCommerzIPN = (ipnData: Record<string, string>): boolean => {
     const verifyKey = ipnData.verify_key;
     if (!verifyKey) {
         // Fallback: use common parameters if verify_key not provided
-        const verificationString = 
+        const verificationString =
             `store_id=${envVars.SSL_STORE_ID}` +
-            `store_passwd=${envVars.SSL_STORE_PASSWORD}` +
+            `&store_passwd=${envVars.SSL_STORE_PASSWORD}` +
             `&tran_id=${ipnData.tran_id || ''}` +
             `&amount=${ipnData.amount || ''}` +
             `&currency=${ipnData.currency || ''}` +

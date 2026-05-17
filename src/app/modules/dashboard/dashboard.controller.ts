@@ -1,11 +1,12 @@
 import { StatusCodes } from "http-status-codes";
 import { catchAsync } from "../../utils/catchAsync.js";
 import { sendResponse } from "../../utils/sendResponse.js";
+import AppError from "../../errorHelpers/AppError.js";
 import { DashboardServices } from "./dashboard.service.js";
 
 const getDriverDashboard = catchAsync(async (req, res) => {
     if (!req.user) {
-        throw new Error("User not authenticated");
+        throw new AppError(StatusCodes.UNAUTHORIZED, "User not authenticated");
     }
 
     const result = await DashboardServices.getDriverDashboard(req.user.userId);
@@ -20,7 +21,7 @@ const getDriverDashboard = catchAsync(async (req, res) => {
 
 const getRiderDashboard = catchAsync(async (req, res) => {
     if (!req.user) {
-        throw new Error("User not authenticated");
+        throw new AppError(StatusCodes.UNAUTHORIZED, "User not authenticated");
     }
 
     const result = await DashboardServices.getRiderDashboard(req.user.userId);

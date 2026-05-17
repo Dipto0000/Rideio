@@ -8,7 +8,17 @@ import { PaymentStatus } from "../subscription/subscription.interface.js";
 import AppError from "../../errorHelpers/AppError.js";
 
 const dashboardCache = new Map<string, { data: any; expiry: number }>();
-const CACHE_TTL = 5 * 60 * 1000;
+const CACHE_TTL = 30 * 1000; // 30 seconds
+
+// Clear cache for a specific user or all users
+export const clearDashboardCache = (userId?: string) => {
+    if (userId) {
+        dashboardCache.delete(`driver:${userId}`);
+        dashboardCache.delete(`rider:${userId}`);
+    } else {
+        dashboardCache.clear();
+    }
+};
 
 const getCached = <T>(key: string): T | null => {
     const cached = dashboardCache.get(key);

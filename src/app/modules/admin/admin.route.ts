@@ -14,8 +14,8 @@ router.get(
     AdminControllers.getAllUsers
 );
 
-router.delete(
-    "/users/:id",
+router.patch(
+    "/users/:id/soft-delete",
     checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
     validateRequest(softDeleteValidation),
     AdminControllers.softDeleteUser
@@ -27,8 +27,8 @@ router.get(
     AdminControllers.getAllRides
 );
 
-router.delete(
-    "/rides/:id",
+router.patch(
+    "/rides/:id/soft-delete",
     checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
     validateRequest(softDeleteValidation),
     AdminControllers.softDeleteRide

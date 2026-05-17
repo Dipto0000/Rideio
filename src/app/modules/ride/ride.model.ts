@@ -37,4 +37,20 @@ const rideSchema = new Schema<IRide>(
     }
 );
 
+// Auto-filter soft-deleted documents
+rideSchema.pre("find", function () {
+    this.where({ isDeleted: { $ne: true } });
+});
+rideSchema.pre("findOne", function () {
+    this.where({ isDeleted: { $ne: true } });
+});
+
+// Indexes for common query patterns
+rideSchema.index({ status: 1 });
+rideSchema.index({ riderId: 1 });
+rideSchema.index({ driverId: 1 });
+rideSchema.index({ riderId: 1, status: 1 });
+rideSchema.index({ driverId: 1, status: 1 });
+rideSchema.index({ isDeleted: 1, status: 1 });
+
 export const Ride = model<IRide>("Ride", rideSchema);

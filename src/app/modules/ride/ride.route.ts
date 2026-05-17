@@ -17,16 +17,16 @@ router.post(
 
 router.get("/", RideController.getAllRides);
 
+// Rider routes (must be before /:id to avoid matching "my-rides" as an id)
+router.get("/my-rides", checkAuth(), RideController.getMyRides);
+
 router.get("/:id", RideController.getRideById);
 
-// Rider routes
 router.patch(
     "/:id/cancel",
     checkAuth(),
     RideController.cancelRide
 );
-
-router.get("/my-rides", checkAuth(), RideController.getMyRides);
 
 // Driver routes
 router.patch(

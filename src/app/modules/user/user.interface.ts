@@ -50,8 +50,6 @@ export enum UserStatus {
     BLOCKED = "BLOCKED",
 }
 
-export const IsActive = UserStatus; // Alias for compatibility with sample code
-
 export interface IAuthProvider {
     provider: "google" | "credentials";
     providerId: string; // For credentials, this is the email. For google, it's the sub/id.

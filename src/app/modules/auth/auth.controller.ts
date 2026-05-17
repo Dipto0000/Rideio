@@ -1,5 +1,6 @@
 import { catchAsync } from "../../utils/catchAsync.js";
 import { sendResponse } from "../../utils/sendResponse.js";
+import AppError from "../../errorHelpers/AppError.js";
 import { AuthServices } from "./auth.service.js";
 import { StatusCodes } from "http-status-codes";
 
@@ -100,7 +101,7 @@ const resetPassword = catchAsync(async (req, res) => {
 
 const changePassword = catchAsync(async (req, res) => {
     if (!req.user) {
-        throw new Error("User not authenticated");
+        throw new AppError(StatusCodes.UNAUTHORIZED, "User not authenticated");
     }
     const result = await AuthServices.changePassword(
         req.body.oldPassword,
@@ -117,7 +118,7 @@ const changePassword = catchAsync(async (req, res) => {
 
 const setPassword = catchAsync(async (req, res) => {
     if (!req.user) {
-        throw new Error("User not authenticated");
+        throw new AppError(StatusCodes.UNAUTHORIZED, "User not authenticated");
     }
     const result = await AuthServices.setPassword(
         req.user.userId,

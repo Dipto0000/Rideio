@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import { envVars } from './app/config/env.js';
 import { StatusCodes } from 'http-status-codes';
@@ -11,6 +12,7 @@ import { sendResponse } from './app/utils/sendResponse.js';
 const app = express();
 
 // Global middleware
+app.use(helmet());
 app.use(cors({
   origin: envVars.FRONTEND_URL,
   credentials: true,

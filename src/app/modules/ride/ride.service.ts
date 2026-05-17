@@ -3,6 +3,7 @@ import AppError from "../../errorHelpers/AppError.js";
 import { Ride } from "./ride.model.js";
 import { User } from "../user/user.model.js";
 import { QueryBuilder } from "../../utils/QueryBuilder.js";
+import { clearDashboardCache } from "../dashboard/dashboard.service.js";
 import { RideStatus, VehicleType } from "./ride.interface.js";
 import { getDistanceInKm, calculateSuggestedFare } from "../../utils/distance.js";
 
@@ -17,11 +18,6 @@ const createRide = async (payload: Record<string, unknown>, userId: string) => {
     const distanceInKm = getDistanceInKm(from.lat, from.lng, to.lat, to.lng);
     const systemSuggestedFare = calculateSuggestedFare(distanceInKm, vehicleType);
 
-    // Update rider's phone number if provided
-    if (phone) {
-        await User.findByIdAndUpdate(userId, { phone });
-    }
-
     const ride = await Ride.create({
         ...payload,
         riderId: userId,
@@ -29,6 +25,7 @@ const createRide = async (payload: Record<string, unknown>, userId: string) => {
         systemSuggestedFare: parseFloat(systemSuggestedFare.toFixed(2)),
     });
 
+    clearDashboardCache(userId);
     return ride;
 };
 
@@ -53,10 +50,10 @@ const getAllRides = async (query: Record<string, unknown>) => {
 
 const getRideById = async (id: string, userId?: string) => {
     const ride = await Ride.findById(id)
-        .populate("riderId", "name picture phone")
+        .populate("riderId", "name picture")
         .populate(
             "driverId",
-            "name picture phone numberplate vehicleType averageRating totalReviews"
+            "name picture numberplate vehicleType averageRating totalReviews"
         );
 
     if (!ride) {
@@ -117,6 +114,8 @@ const acceptRide = async (rideId: string, driverId: string) => {
         }
     );
 
+    clearDashboardCache(ride.riderId?.toString());
+    clearDashboardCache(driverId);
     return ride;
 };
 
@@ -163,6 +162,8 @@ const cancelRide = async (rideId: string, userId: string) => {
 
     ride.status = RideStatus.CANCELLED;
     await ride.save();
+    clearDashboardCache(ride.riderId?.toString());
+    clearDashboardCache(ride.driverId?.toString());
 
     // Notify driver that the rider cancelled
     if (ride.driverId) {
@@ -205,6 +206,8 @@ const startRide = async (rideId: string, driverId: string) => {
 
     ride.status = RideStatus.IN_PROGRESS;
     await ride.save();
+    clearDashboardCache(ride.riderId?.toString());
+    clearDashboardCache(driverId);
 
     // Notify rider that ride has started
     const { NotificationServices } = await import(
@@ -245,6 +248,8 @@ const completeRide = async (rideId: string, driverId: string) => {
 
     ride.status = RideStatus.COMPLETED;
     await ride.save();
+    clearDashboardCache(ride.riderId?.toString());
+    clearDashboardCache(driverId);
 
     // Notify rider that ride is completed
     const { NotificationServices } = await import(

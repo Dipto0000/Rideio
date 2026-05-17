@@ -1,4 +1,5 @@
 import { Router } from "express";
+import rateLimit from "express-rate-limit";
 import { validateRequest } from "../../middlewares/validateRequest.js";
 import { checkAuth } from "../../middlewares/checkAuth.js";
 import { parseFormData } from "../../middlewares/parseFormData.js";
@@ -8,9 +9,27 @@ import { authValidation } from "./auth.validation.js";
 
 const router = Router();
 
+// Rate limiters
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 20, // 20 attempts per window
+    message: { success: false, message: "Too many attempts. Please try again later." },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+const registerLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 5, // 5 registrations per hour
+    message: { success: false, message: "Too many registration attempts. Please try again later." },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
 // Public routes
 router.post(
     "/login",
+    authLimiter,
     validateRequest(authValidation.loginValidation),
     AuthControllers.credentialsLogin
 );
@@ -23,6 +42,7 @@ router.post(
 
 router.post(
     "/register/rider",
+    registerLimiter,
     parseFormData,
     multerUpload.single('profilePicture'),
     validateRequest(authValidation.registerRiderValidation),
@@ -31,6 +51,7 @@ router.post(
 
 router.post(
     "/register/driver",
+    registerLimiter,
     parseFormData,
     multerUpload.single('profilePicture'),
     validateRequest(authValidation.registerDriverValidation),
@@ -51,6 +72,7 @@ router.post(
 
 router.post(
     "/forgot-password",
+    authLimiter,
     validateRequest(authValidation.forgotPasswordValidation),
     AuthControllers.forgotPassword
 );
@@ -63,6 +85,7 @@ router.post(
 
 router.post(
     "/refresh-token",
+    authLimiter,
     AuthControllers.getNewAccessToken
 );
 

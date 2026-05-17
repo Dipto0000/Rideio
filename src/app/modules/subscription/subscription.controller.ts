@@ -1,12 +1,13 @@
 import { StatusCodes } from "http-status-codes";
 import { catchAsync } from "../../utils/catchAsync.js";
 import { sendResponse } from "../../utils/sendResponse.js";
+import AppError from "../../errorHelpers/AppError.js";
 import { SubscriptionServices } from "./subscription.service.js";
 import { envVars } from "../../config/env.js";
 
 const initPayment = catchAsync(async (req, res) => {
     if (!req.user) {
-        throw new Error("User not authenticated");
+        throw new AppError(StatusCodes.UNAUTHORIZED, "User not authenticated");
     }
 
     const result = await SubscriptionServices.initPayment(req.user.userId, req.body.planType);
@@ -48,7 +49,7 @@ const handleIPN = catchAsync(async (req, res) => {
 
 const getPaymentHistory = catchAsync(async (req, res) => {
     if (!req.user) {
-        throw new Error("User not authenticated");
+        throw new AppError(StatusCodes.UNAUTHORIZED, "User not authenticated");
     }
 
     const result = await SubscriptionServices.getPaymentHistory(req.user.userId, req.query as Record<string, string>);
@@ -64,7 +65,7 @@ const getPaymentHistory = catchAsync(async (req, res) => {
 
 const getSubscriptionStatus = catchAsync(async (req, res) => {
     if (!req.user) {
-        throw new Error("User not authenticated");
+        throw new AppError(StatusCodes.UNAUTHORIZED, "User not authenticated");
     }
 
     const result = await SubscriptionServices.getSubscriptionStatus(req.user.userId);

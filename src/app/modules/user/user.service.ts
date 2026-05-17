@@ -10,7 +10,7 @@ import { IAuthProvider, IUser, Role, SubRole } from "./user.interface.js";
 import { User } from "./user.model.js";
 
 const createUser = async (payload: Partial<IUser>) => {
-    const { email, password, name, vehicleType, numberplate, licenseNumber, dob, ...rest } = payload;
+    const { email, password, name, vehicleType, numberplate, licenseNumber, dob, role: _ignoredRole, subRole: _ignoredSubRole, ...rest } = payload;
 
     const isUserExist = await User.findOne({ email });
 
@@ -34,7 +34,8 @@ const createUser = async (payload: Partial<IUser>) => {
         password: hashedPassword,
         auths: [authProvider],
         name: name as string,
-        // Driver-specific fields
+        role: Role.USER,
+        subRole: SubRole.RIDER,
         vehicleType,
         numberplate,
         licenseNumber,
@@ -54,14 +55,14 @@ const createUser = async (payload: Partial<IUser>) => {
     await user.save();
 
     // Send confirmation email
-    const confirmLink = `${envVars.FRONTEND_URL}/verify-email?token=${verificationToken}`;
+    const verifyLink = `${envVars.FRONTEND_URL}/auth/verify?token=${verificationToken}`;
     sendEmail({
         to: user.email,
         subject: "Confirm Your Email - Rideio",
         templateName: "confirmEmail",
         templateData: {
             name: user.name,
-            confirmLink,
+            verifyLink,
         },
     }).catch(err => console.error("Failed to send confirmation email:", err));
 

@@ -12,7 +12,7 @@ const router = Router();
 
 const moduleRoutes: { path: string; route: Router }[] = [
   {
-    path: '/user',
+    path: '/users',
     route: UserRoutes,
   },
   {
@@ -24,7 +24,7 @@ const moduleRoutes: { path: string; route: Router }[] = [
     route: RideRoutes,
   },
   {
-    path: '/subscription',
+    path: '/subscriptions',
     route: SubscriptionRoutes,
   },
   {

@@ -32,7 +32,7 @@ export const uploadBufferToCloudinary = async (buffer: Buffer, fileName: string)
             ).end(buffer);
         });
     } catch (error: any) {
-        console.log(error);
+        console.error(error);
         throw new AppError(401, `Error uploading file ${error.message}`);
     }
 };
