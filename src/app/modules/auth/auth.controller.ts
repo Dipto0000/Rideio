@@ -4,6 +4,14 @@ import AppError from "../../errorHelpers/AppError.js";
 import { AuthServices } from "./auth.service.js";
 import { StatusCodes } from "http-status-codes";
 
+type UploadedFile = Express.Multer.File & { secure_url?: string };
+
+function getFileUrl(file: Express.Multer.File | undefined): string | undefined {
+  if (!file) return undefined;
+  const uploaded = file as UploadedFile;
+  return uploaded.path || uploaded.secure_url;
+}
+
 const credentialsLogin = catchAsync(async (req, res) => {
     const result = await AuthServices.credentialsLogin(req.body);
     sendResponse(res, {
@@ -25,7 +33,7 @@ const handleGoogleAuth = catchAsync(async (req, res) => {
 });
 
 const registerRider = catchAsync(async (req, res) => {
-    const picture = req.file ? (req.file as any).path || (req.file as any).secure_url : undefined;
+    const picture = getFileUrl(req.file);
     const result = await AuthServices.registerWithCredentials({
         ...req.body,
         picture,
@@ -41,7 +49,7 @@ const registerRider = catchAsync(async (req, res) => {
 });
 
 const registerDriver = catchAsync(async (req, res) => {
-    const picture = req.file ? (req.file as any).path || (req.file as any).secure_url : undefined;
+    const picture = getFileUrl(req.file);
     const result = await AuthServices.registerWithCredentials({
         ...req.body,
         picture,

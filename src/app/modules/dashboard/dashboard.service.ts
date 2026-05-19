@@ -65,7 +65,7 @@ const getDriverDashboard = async (driverId: string) => {
         },
         recentRides: recentRides.map((ride) => ({
             _id: ride._id,
-            riderName: (ride.riderId as any)?.name || "Anonymous",
+            riderName: ((ride.riderId as { name?: string })?.name) || "Anonymous",
             from: { address: ride.from.address },
             to: { address: ride.to.address },
             status: ride.status,
@@ -180,8 +180,8 @@ const getAdminDashboard = async () => {
                 to: { address: rideObj.to.address },
                 status: rideObj.status,
                 systemSuggestedFare: rideObj.systemSuggestedFare,
-                riderName: (rideObj.riderId as any)?.name || "Anonymous",
-                driverName: (rideObj.driverId as any)?.name || null,
+                riderName: ((rideObj.riderId as { name?: string })?.name) || "Anonymous",
+                driverName: ((rideObj.driverId as { name?: string })?.name) || null,
                 createdAt: rideObj.createdAt,
             };
         }),

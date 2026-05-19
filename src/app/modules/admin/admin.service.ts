@@ -82,7 +82,7 @@ const softDeleteRide = async (rideId: string, adminId: string, reason?: string) 
         throw new AppError(StatusCodes.NOT_FOUND, "Ride not found");
     }
 
-    if ((ride as any).isDeleted) {
+    if ((ride as unknown as { isDeleted: boolean }).isDeleted) {
         throw new AppError(StatusCodes.BAD_REQUEST, "Ride is already deleted");
     }
 

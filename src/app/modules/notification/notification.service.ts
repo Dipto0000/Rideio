@@ -74,7 +74,7 @@ const markAsRead = async (userId: string, notificationId: string) => {
         throw new AppError(StatusCodes.NOT_FOUND, "User not found");
     }
 
-    const notification = (user.notifications as any).id(notificationId);
+    const notification = (user.notifications as unknown as { id: (id: string) => Record<string, unknown> | null }).id(notificationId);
     if (!notification) {
         throw new AppError(StatusCodes.NOT_FOUND, "Notification not found");
     }

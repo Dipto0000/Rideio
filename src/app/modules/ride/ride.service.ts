@@ -66,27 +66,40 @@ const getRideById = async (id: string, userId?: string) => {
         const isDriver = ride.driverId?._id?.toString() === userId;
         if (!isRider && !isDriver) {
             // Non-participants (e.g. driver browsing): show rider name + picture, hide phone
-            if (ride.riderId && typeof ride.riderId === "object") {
-                const rider = ride.riderId as unknown as { _id: unknown; name: string; picture?: string };
+            const rider = ride.riderId as unknown as { _id: unknown; name: string; picture?: string };
+            if (rider && rider._id) {
                 ride.riderId = {
                     _id: rider._id,
                     name: rider.name,
                     picture: rider.picture,
-                } as any;
+                } as unknown as typeof ride.riderId;
             }
             // Always hide driver info from non-participants
-            ride.driverId = undefined as any;
+            ride.driverId = undefined as unknown as typeof ride.driverId;
         }
     } else {
         // Unauthenticated users see only basic info
-        ride.riderId = undefined as any;
-        ride.driverId = undefined as any;
+        ride.riderId = undefined as unknown as typeof ride.riderId;
+        ride.driverId = undefined as unknown as typeof ride.driverId;
     }
 
     return ride;
 };
 
 const acceptRide = async (rideId: string, driverId: string) => {
+    // Check if driver already has an active ride
+    const activeRide = await Ride.findOne({
+        driverId,
+        status: { $in: [RideStatus.ACCEPTED, RideStatus.IN_PROGRESS] },
+    });
+
+    if (activeRide) {
+        throw new AppError(
+            StatusCodes.BAD_REQUEST,
+            "Complete your current ride before accepting a new one"
+        );
+    }
+
     const ride = await Ride.findById(rideId);
 
     if (!ride) {
@@ -97,7 +110,7 @@ const acceptRide = async (rideId: string, driverId: string) => {
         throw new AppError(StatusCodes.BAD_REQUEST, "Ride is not available");
     }
 
-    ride.driverId = driverId as any;
+    ride.driverId = driverId as unknown as typeof ride.driverId;
     ride.status = RideStatus.ACCEPTED;
     await ride.save();
 

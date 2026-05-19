@@ -6,9 +6,17 @@ import { UserServices } from './user.service.js';
 import { IAuthUser } from './user.interface.js';
 import AppError from '../../errorHelpers/AppError.js';
 
+type UploadedFile = Express.Multer.File & { secure_url?: string };
+
+function getFileUrl(file: Express.Multer.File | undefined): string | undefined {
+  if (!file) return undefined;
+  const uploaded = file as UploadedFile;
+  return uploaded.path || uploaded.secure_url;
+}
+
 export const UserController = {
     registerUser: catchAsync(async (req: Request, res: Response) => {
-        const picture = req.file ? (req.file as any).path || (req.file as any).secure_url : undefined;
+        const picture = getFileUrl(req.file);
         const result = await UserServices.createUser({ ...req.body, picture });
 
         sendResponse(res, {
@@ -78,11 +86,11 @@ export const UserController = {
         if (!req.file) {
             throw new AppError(StatusCodes.BAD_REQUEST, 'No file uploaded');
         }
-        const pictureUrl = (req.file as any).path || (req.file as any).secure_url;
+        const pictureUrl = getFileUrl(req.file) || '';
 
         await UserServices.updateUser(user.userId, {
             picture: pictureUrl,
-        } as any, user);
+        } as Record<string, unknown>, user);
 
         sendResponse(res, {
             statusCode: StatusCodes.OK,
