@@ -50,10 +50,10 @@ const getAllRides = async (query: Record<string, unknown>) => {
 
 const getRideById = async (id: string, userId?: string) => {
     const ride = await Ride.findById(id)
-        .populate("riderId", "name picture")
+        .populate("riderId", "name picture phone")
         .populate(
             "driverId",
-            "name picture numberplate vehicleType averageRating totalReviews"
+            "name picture phone numberplate vehicleType averageRating totalReviews"
         );
 
     if (!ride) {

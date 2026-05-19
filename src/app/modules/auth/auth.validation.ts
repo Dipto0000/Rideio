@@ -1,6 +1,13 @@
 import { z } from "zod/v4";
 import { Role, SubRole } from "../user/user.interface.js";
 
+const bdPhoneRegex = /^(?:\+8801|01)[3-9]\d{8}$/;
+const passwordRegex = /^(?=.*[a-zA-Z])(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]).{6,}$/;
+
+const phoneOptional = z.string().regex(bdPhoneRegex, "Enter a valid Bangladeshi phone number").optional().or(z.literal(""));
+const phoneRequired = z.string().min(1, "Phone number is required").regex(bdPhoneRegex, "Enter a valid Bangladeshi phone number");
+const password = z.string().min(6, "Password must be at least 6 characters").regex(passwordRegex, "Password must contain at least one letter and one special character");
+
 const loginValidation = z.object({
     email: z.email("Invalid email address"),
     password: z.string().min(6, "Password must be at least 6 characters"),
@@ -22,25 +29,25 @@ const forgotPasswordValidation = z.object({
 });
 
 const resetPasswordValidation = z.object({
-    newPassword: z.string().min(6, "Password must be at least 6 characters"),
+    newPassword: password,
     token: z.string().min(1, "Token is required"),
 });
 
 const changePasswordValidation = z.object({
     oldPassword: z.string().min(1, "Old password is required"),
-    newPassword: z.string().min(6, "New password must be at least 6 characters"),
+    newPassword: password,
 });
 
 const setPasswordValidation = z.object({
-    password: z.string().min(6, "Password must be at least 6 characters"),
+    password,
 });
 
 // Rider registration validation (allows social login)
 const registerRiderValidation = z.object({
     name: z.string().min(1, "Name is required"),
     email: z.email("Invalid email address"),
-    password: z.string().min(6, "Password must be at least 6 characters").optional(),
-    phone: z.string().optional(),
+    password: password.optional(),
+    phone: phoneOptional,
     address: z.string().optional(),
     dob: z.string().optional().refine((val) => {
         if (!val) return true; // Optional field
@@ -55,8 +62,8 @@ const registerRiderValidation = z.object({
 const registerDriverValidation = z.object({
     name: z.string().min(1, "Name is required"),
     email: z.email("Invalid email address"),
-    password: z.string().min(6, "Password must be at least 6 characters"),
-    phone: z.string().optional(),
+    password,
+    phone: phoneRequired,
     address: z.string().optional(),
     // Driver-specific fields (required)
     vehicleType: z.enum(["bike", "car"], "Vehicle type is required"),

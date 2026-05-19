@@ -2,11 +2,12 @@ import nodemailer from "nodemailer";
 import { envVars } from "../config/env.js";
 
 const transporter = nodemailer.createTransport({
-    host: envVars.MAILTRAP_HOST,
-    port: Number(envVars.MAILTRAP_PORT),
+    host: envVars.EMAIL_HOST,
+    port: Number(envVars.EMAIL_PORT),
+    secure: Number(envVars.EMAIL_PORT) === 465,
     auth: {
-        user: envVars.MAILTRAP_USER,
-        pass: envVars.MAILTRAP_PASS,
+        user: envVars.GMAIL_USER,
+        pass: envVars.GMAIL_APP_PASSWORD,
     },
 });
 
@@ -88,7 +89,7 @@ const sendEmail = async (options: SendEmailOptions) => {
     }
 
     await transporter.sendMail({
-        from: `"Rideio" <no-reply@rideio.com>`,
+        from: `"${envVars.EMAIL_FROM_NAME}" <${envVars.GMAIL_USER}>`,
         to,
         subject,
         html,

@@ -13,10 +13,11 @@ interface EnvConfig {
     JWT_REFRESH_EXPIRES: string;
     JWT_VERIFICATION_SECRET: string;
     FRONTEND_URL: string;
-    MAILTRAP_HOST: string;
-    MAILTRAP_PORT: string;
-    MAILTRAP_USER: string;
-    MAILTRAP_PASS: string;
+    EMAIL_HOST: string;
+    EMAIL_PORT: string;
+    EMAIL_FROM_NAME: string;
+    GMAIL_USER: string;
+    GMAIL_APP_PASSWORD: string;
     CLOUDINARY_CLOUD_NAME: string;
     CLOUDINARY_API_KEY: string;
     CLOUDINARY_API_SECRET: string;
@@ -35,7 +36,7 @@ const loadEnvVariables = (): EnvConfig => {
     const requiredEnvVariables: string[] = [
         "PORT", "DB_URL", "NODE_ENV", "BCRYPT_SALT_ROUND",
         "JWT_ACCESS_EXPIRES", "JWT_ACCESS_SECRET", "JWT_REFRESH_SECRET", "JWT_REFRESH_EXPIRES", "JWT_VERIFICATION_SECRET", "FRONTEND_URL",
-        "MAILTRAP_HOST", "MAILTRAP_PORT", "MAILTRAP_USER", "MAILTRAP_PASS",
+        "EMAIL_HOST", "EMAIL_PORT", "EMAIL_FROM_NAME", "GMAIL_USER", "GMAIL_APP_PASSWORD",
         "CLOUDINARY_CLOUD_NAME", "CLOUDINARY_API_KEY", "CLOUDINARY_API_SECRET",
         "SSL_STORE_ID", "SSL_STORE_PASSWORD", "SSL_IS_SANDBOX",
         "SSL_SUCCESS_URL", "SSL_CANCEL_URL", "SSL_FAIL_URL",        "SSL_IPN_URL"
@@ -58,10 +59,11 @@ const loadEnvVariables = (): EnvConfig => {
         JWT_REFRESH_EXPIRES: process.env.JWT_REFRESH_EXPIRES as string,
         JWT_VERIFICATION_SECRET: process.env.JWT_VERIFICATION_SECRET as string,
         FRONTEND_URL: process.env.FRONTEND_URL as string,
-        MAILTRAP_HOST: process.env.MAILTRAP_HOST as string,
-        MAILTRAP_PORT: process.env.MAILTRAP_PORT as string,
-        MAILTRAP_USER: process.env.MAILTRAP_USER as string,
-        MAILTRAP_PASS: process.env.MAILTRAP_PASS as string,
+        EMAIL_HOST: process.env.EMAIL_HOST as string,
+        EMAIL_PORT: process.env.EMAIL_PORT as string,
+        EMAIL_FROM_NAME: process.env.EMAIL_FROM_NAME as string,
+        GMAIL_USER: process.env.GMAIL_USER as string,
+        GMAIL_APP_PASSWORD: process.env.GMAIL_APP_PASSWORD as string,
         CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME!,
         CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY!,
         CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET!,
