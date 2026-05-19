@@ -33,7 +33,7 @@ export const uploadBufferToCloudinary = async (buffer: Buffer, fileName: string)
         });
     } catch (error: any) {
         console.error(error);
-        throw new AppError(401, `Error uploading file ${error.message}`);
+        throw new AppError(500, "Failed to upload image. Please try again.");
     }
 };
 

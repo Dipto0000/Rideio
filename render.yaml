@@ -1,0 +1,60 @@
+services:
+  - type: web
+    name: rideio-backend
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        generateValue: false
+        value: "10000"
+      - key: DB_URL
+        sync: false
+      - key: BCRYPT_SALT_ROUND
+        value: "10"
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_ACCESS_EXPIRES
+        value: "1d"
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_EXPIRES
+        value: "30d"
+      - key: JWT_VERIFICATION_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        sync: false
+      - key: EMAIL_HOST
+        value: smtp.gmail.com
+      - key: EMAIL_PORT
+        value: "465"
+      - key: EMAIL_FROM_NAME
+        value: Rideio Team
+      - key: GMAIL_USER
+        sync: false
+      - key: GMAIL_APP_PASSWORD
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: SSL_STORE_ID
+        sync: false
+      - key: SSL_STORE_PASSWORD
+        sync: false
+      - key: SSL_IS_SANDBOX
+        value: "true"
+      - key: SSL_SUCCESS_URL
+        sync: false
+      - key: SSL_CANCEL_URL
+        sync: false
+      - key: SSL_FAIL_URL
+        sync: false
+      - key: SSL_IPN_URL
+        sync: false

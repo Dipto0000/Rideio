@@ -31,12 +31,16 @@ const credentialsLogin = async (payload: { email: string; password: string }) =>
         throw new AppError(StatusCodes.BAD_REQUEST, "Please verify your email first");
     }
 
-    if (user.status === UserStatus.BLOCKED || user.status === UserStatus.INACTIVE) {
-        throw new AppError(StatusCodes.BAD_REQUEST, `User is ${user.status}`);
+    if (user.status === UserStatus.BLOCKED) {
+        throw new AppError(StatusCodes.FORBIDDEN, "Your account has been blocked. Please contact support.");
+    }
+
+    if (user.status === UserStatus.INACTIVE) {
+        throw new AppError(StatusCodes.FORBIDDEN, "Your account is inactive. Please contact support.");
     }
 
     if (user.isDeleted) {
-        throw new AppError(StatusCodes.BAD_REQUEST, "User is deleted");
+        throw new AppError(StatusCodes.BAD_REQUEST, "This account no longer exists.");
     }
 
     const userTokens = createUserTokens(
@@ -305,11 +309,15 @@ const forgotPassword = async (email: string) => {
     }
 
     if (!user.isVerified) {
-        throw new AppError(StatusCodes.BAD_REQUEST, "User is not verified");
+        throw new AppError(StatusCodes.BAD_REQUEST, "Please verify your email first.");
     }
 
-    if (user.status === UserStatus.BLOCKED || user.status === UserStatus.INACTIVE) {
-        throw new AppError(StatusCodes.BAD_REQUEST, `User is ${user.status}`);
+    if (user.status === UserStatus.BLOCKED) {
+        throw new AppError(StatusCodes.FORBIDDEN, "Your account has been blocked. Please contact support.");
+    }
+
+    if (user.status === UserStatus.INACTIVE) {
+        throw new AppError(StatusCodes.FORBIDDEN, "Your account is inactive. Please contact support.");
     }
 
     if (user.isDeleted) {
