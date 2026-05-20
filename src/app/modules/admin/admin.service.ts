@@ -146,7 +146,17 @@ const createAdmin = async (payload: ICreateAdminPayload, superAdminId: string) =
 
     const existingUser = await User.findOne({ email: payload.email });
     if (existingUser) {
-        throw new AppError(StatusCodes.BAD_REQUEST, "Email already exists");
+        // Already an admin — nothing to do
+        if (existingUser.role === Role.ADMIN) {
+            throw new AppError(StatusCodes.BAD_REQUEST, "User is already an admin");
+        }
+        // Existing non-admin user → promote to admin
+        existingUser.role = Role.ADMIN;
+        existingUser.isVerified = true;
+        existingUser.status = UserStatus.ACTIVE;
+        await existingUser.save();
+
+        return { message: "User promoted to admin successfully" };
     }
 
     const hashedPassword = await bcryptjs.hash(payload.password, Number(envVars.BCRYPT_SALT_ROUND));
