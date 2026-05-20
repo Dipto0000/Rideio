@@ -63,6 +63,21 @@ const getPaymentHistory = catchAsync(async (req, res) => {
     });
 });
 
+const cancelPendingPayment = catchAsync(async (req, res) => {
+    if (!req.user) {
+        throw new AppError(StatusCodes.UNAUTHORIZED, "User not authenticated");
+    }
+
+    const result = await SubscriptionServices.cancelPendingPayment(req.user.userId);
+
+    sendResponse(res, {
+        statusCode: StatusCodes.OK,
+        success: true,
+        message: result.message,
+        data: result,
+    });
+});
+
 const getSubscriptionStatus = catchAsync(async (req, res) => {
     if (!req.user) {
         throw new AppError(StatusCodes.UNAUTHORIZED, "User not authenticated");
@@ -86,4 +101,5 @@ export const SubscriptionControllers = {
     handleIPN,
     getPaymentHistory,
     getSubscriptionStatus,
+    cancelPendingPayment,
 };

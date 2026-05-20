@@ -20,6 +20,12 @@ router.get(
     SubscriptionControllers.getPaymentHistory
 );
 
+router.post(
+    "/cancel-pending",
+    checkAuth(),
+    SubscriptionControllers.cancelPendingPayment
+);
+
 router.get(
     "/status",
     checkAuth(),

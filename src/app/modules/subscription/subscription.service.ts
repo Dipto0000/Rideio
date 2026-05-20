@@ -359,6 +359,22 @@ const getSubscriptionStatus = async (userId: string) => {
     };
 };
 
+const cancelPendingPayment = async (userId: string) => {
+    const pendingPayment = await Payment.findOne({
+        userId,
+        status: PaymentStatus.PENDING,
+    });
+
+    if (!pendingPayment) {
+        throw new AppError(StatusCodes.NOT_FOUND, "No pending payment found");
+    }
+
+    pendingPayment.status = PaymentStatus.CANCELLED;
+    await pendingPayment.save();
+
+    return { message: "Pending payment cancelled", paymentId: pendingPayment.paymentId };
+};
+
 export const SubscriptionServices = {
     seedDefaultPlan,
     initPayment,
@@ -368,4 +384,5 @@ export const SubscriptionServices = {
     handleIPN,
     getPaymentHistory,
     getSubscriptionStatus,
+    cancelPendingPayment,
 };
