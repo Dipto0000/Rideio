@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
@@ -21,6 +21,15 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+// Base Route/Root Path Message
+app.get('/', (req: Request, res: Response) => {
+  res.status(200).json({
+    success: true,
+    message: "Welcome to Rideio Backend API Pipeline Live Server!",
+    version: "1.0.0"
+  });
+});
 
 // Health check route
 app.get('/health', (_req, res) => {
