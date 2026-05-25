@@ -133,9 +133,20 @@ const getSingleUser = async (id: string) => {
 };
 
 const getMe = async (userId: string) => {
-    const user = await User.findById(userId).select("-password");
+    const user = await User.findById(userId).select("+password");
+
+    if (!user) {
+        throw new AppError(StatusCodes.NOT_FOUND, "User not found");
+    }
+
+    // Return hasPassword boolean instead of exposing the actual password hash
+    const { password, ...safeUser } = user.toObject();
+
     return {
-        data: user,
+        data: {
+            ...safeUser,
+            hasPassword: !!password,
+        },
     };
 };
 
