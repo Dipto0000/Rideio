@@ -194,9 +194,9 @@ const registerWithCredentials = async (payload: {
     user.verificationTokenExpiry = new Date(Date.now() + 10 * 60 * 1000);
     await user.save();
 
-    // Send verification email
+    // Send verification email (non-blocking — don't hang the response if email fails)
     const verifyLink = `${envVars.FRONTEND_URL}/auth/verify?token=${verificationToken}`;
-    await sendEmail({
+    sendEmail({
         to: user.email,
         subject: "Verify Your Email - Rideio",
         templateName: "confirmEmail",
@@ -204,6 +204,8 @@ const registerWithCredentials = async (payload: {
             name: user.name,
             verifyLink,
         },
+    }).catch((err) => {
+        console.error("Failed to send verification email:", err?.message || err);
     });
 
     // Return user data without sensitive info
@@ -288,7 +290,7 @@ const resendConfirmation = async (email: string) => {
     await user.save();
 
     const verifyLink = `${envVars.FRONTEND_URL}/auth/verify?token=${verificationToken}`;
-    await sendEmail({
+    sendEmail({
         to: user.email,
         subject: "Confirm Your Email - Rideio",
         templateName: "confirmEmail",
@@ -296,6 +298,8 @@ const resendConfirmation = async (email: string) => {
             name: user.name,
             verifyLink,
         },
+    }).catch((err) => {
+        console.error("Failed to resend confirmation email:", err?.message || err);
     });
 
     return { message: "Confirmation email resent" };
@@ -332,7 +336,7 @@ const forgotPassword = async (email: string) => {
 
     const resetUILink = `${envVars.FRONTEND_URL}/reset-password?id=${user._id}&token=${resetToken}`;
 
-    await sendEmail({
+    sendEmail({
         to: user.email,
         subject: "Password Reset - Rideio",
         templateName: "forgetPassword",
@@ -340,6 +344,8 @@ const forgotPassword = async (email: string) => {
             name: user.name,
             resetUILink,
         },
+    }).catch((err) => {
+        console.error("Failed to send password reset email:", err?.message || err);
     });
 
     return { message: "Password reset email sent" };

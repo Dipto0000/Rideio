@@ -9,6 +9,8 @@ const transporter = nodemailer.createTransport({
         user: envVars.GMAIL_USER,
         pass: envVars.GMAIL_APP_PASSWORD,
     },
+    connectionTimeout: 10000, // 10s to establish connection
+    socketTimeout: 15000,     // 15s for mail transaction
 });
 
 interface SendEmailOptions {
