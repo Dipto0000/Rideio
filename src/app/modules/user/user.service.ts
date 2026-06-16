@@ -132,7 +132,85 @@ const getSingleUser = async (id: string) => {
     };
 };
 
+const DEMO_USER_IDS = [
+    '000000000000000000000001',
+    '000000000000000000000002',
+    '000000000000000000000003',
+    '000000000000000000000004',
+];
+
+const DEMO_PROFILES: Record<string, Record<string, unknown>> = {
+    '000000000000000000000001': {
+        _id: '000000000000000000000001',
+        name: 'Super Admin',
+        email: 'superadmin@rideio.demo',
+        role: 'SUPER_ADMIN',
+        subRole: 'RIDER',
+        picture: undefined,
+        phone: undefined,
+        address: undefined,
+        isVerified: true,
+        isDeleted: false,
+        status: 'ACTIVE',
+        subscription: { isSubscribed: false },
+        hasPassword: true,
+    },
+    '000000000000000000000002': {
+        _id: '000000000000000000000002',
+        name: 'Admin User',
+        email: 'admin@rideio.demo',
+        role: 'ADMIN',
+        subRole: 'RIDER',
+        picture: undefined,
+        phone: undefined,
+        address: undefined,
+        isVerified: true,
+        isDeleted: false,
+        status: 'ACTIVE',
+        subscription: { isSubscribed: false },
+        hasPassword: true,
+    },
+    '000000000000000000000003': {
+        _id: '000000000000000000000003',
+        name: 'Demo Rider',
+        email: 'demo.rider@rideio.demo',
+        role: 'USER',
+        subRole: 'RIDER',
+        picture: undefined,
+        phone: undefined,
+        address: undefined,
+        isVerified: true,
+        isDeleted: false,
+        status: 'ACTIVE',
+        subscription: { isSubscribed: false },
+        hasPassword: true,
+    },
+    '000000000000000000000004': {
+        _id: '000000000000000000000004',
+        name: 'Demo Driver',
+        email: 'demo.driver@rideio.demo',
+        role: 'USER',
+        subRole: 'DRIVER',
+        picture: undefined,
+        phone: undefined,
+        address: undefined,
+        isVerified: true,
+        isDeleted: false,
+        status: 'ACTIVE',
+        vehicleType: 'car',
+        subscription: { isSubscribed: true },
+        hasPassword: true,
+    },
+};
+
 const getMe = async (userId: string) => {
+    // Handle demo users (portfolio/recruiter access)
+    if (DEMO_USER_IDS.includes(userId)) {
+        return {
+            data: DEMO_PROFILES[userId],
+        };
+    }
+
     const user = await User.findById(userId).select("+password");
 
     if (!user) {
