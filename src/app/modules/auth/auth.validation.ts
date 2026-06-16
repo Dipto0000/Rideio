@@ -77,6 +77,10 @@ const registerDriverValidation = z.object({
     // Role and subRole are set by the endpoint, not from client
 });
 
+const demoLoginValidation = z.object({
+    role: z.string().min(1, "Role is required"),
+});
+
 export const authValidation = {
     loginValidation,
     googleAuthValidation,
@@ -87,5 +91,6 @@ export const authValidation = {
     setPasswordValidation,
     registerRiderValidation,
     registerDriverValidation,
+    demoLoginValidation,
 };
 

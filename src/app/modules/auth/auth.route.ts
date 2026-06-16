@@ -89,6 +89,14 @@ router.post(
     AuthControllers.getNewAccessToken
 );
 
+// Demo login route (bypasses real auth for portfolio/recruiter access)
+router.post(
+    "/demo-login",
+    authLimiter,
+    validateRequest(authValidation.demoLoginValidation),
+    AuthControllers.demoLogin
+);
+
 // Protected routes (require authentication)
 router.post(
     "/change-password",

@@ -150,6 +150,16 @@ const getNewAccessToken = catchAsync(async (req, res) => {
     });
 });
 
+const demoLogin = catchAsync(async (req, res) => {
+    const result = await AuthServices.demoLogin(req.body.role);
+    sendResponse(res, {
+        statusCode: StatusCodes.OK,
+        success: true,
+        message: `Demo login successful as ${req.body.role}`,
+        data: result,
+    });
+});
+
 export const AuthControllers = {
     credentialsLogin,
     handleGoogleAuth,
@@ -162,4 +172,5 @@ export const AuthControllers = {
     changePassword,
     setPassword,
     getNewAccessToken,
+    demoLogin,
 };

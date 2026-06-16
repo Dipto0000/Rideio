@@ -6,6 +6,7 @@ import AppError from "../../errorHelpers/AppError.js";
 import { sendEmail } from "../../utils/sendEmail.js";
 import { createNewAccessTokenWithRefreshToken, createUserTokens } from "../../utils/usertokens.js";
 import { IAuthProvider, UserStatus, IUser, Role, SubRole } from "../user/user.interface.js";
+import { demoLogin } from "./auth.demo-service.js";
 import { User } from "../user/user.model.js";
 
 const credentialsLogin = async (payload: { email: string; password: string }) => {
@@ -439,4 +440,5 @@ export const AuthServices = {
     changePassword,
     setPassword,
     getNewAccessToken,
+    demoLogin,
 };
