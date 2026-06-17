@@ -198,7 +198,7 @@ const DEMO_PROFILES: Record<string, Record<string, unknown>> = {
         isDeleted: false,
         status: 'ACTIVE',
         vehicleType: 'car',
-        subscription: { isSubscribed: true },
+        subscription: { isSubscribed: false },
         hasPassword: true,
     },
 };

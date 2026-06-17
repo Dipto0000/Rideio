@@ -8,6 +8,21 @@ import { QueryBuilder } from "../../utils/QueryBuilder.js";
 import { Payment, SubscriptionPlan } from "./subscription.model.js";
 import { ISSLCommerzInitData, PaymentStatus, PlanType } from "./subscription.interface.js";
 
+// Demo user IDs & profiles — mirrors auth.demo-service.ts
+const DEMO_USER_IDS = [
+    '000000000000000000000001',
+    '000000000000000000000002',
+    '000000000000000000000003',
+    '000000000000000000000004',
+];
+
+const DEMO_USER_PROFILES: Record<string, { name: string; email: string; phone: string; address: string }> = {
+    '000000000000000000000001': { name: 'Super Admin', email: 'superadmin@rideio.demo', phone: '01000000000', address: 'Dhaka' },
+    '000000000000000000000002': { name: 'Admin User', email: 'admin@rideio.demo', phone: '01000000000', address: 'Dhaka' },
+    '000000000000000000000003': { name: 'Demo Rider', email: 'demo.rider@rideio.demo', phone: '01000000000', address: 'Dhaka' },
+    '000000000000000000000004': { name: 'Demo Driver', email: 'demo.driver@rideio.demo', phone: '01000000000', address: 'Dhaka' },
+};
+
 const getSSLCommerzInstance = () => {
     return new SSLCommerzPayment(
         envVars.SSL_STORE_ID,
@@ -34,9 +49,29 @@ const seedDefaultPlan = async () => {
 };
 
 const initPayment = async (userId: string, planType: PlanType) => {
-    const user = await User.findById(userId);
-    if (!user) {
-        throw new AppError(StatusCodes.NOT_FOUND, "User not found");
+    let userName: string, userEmail: string, userPhone: string, userAddress: string;
+    let userDocId: string;
+
+    if (DEMO_USER_IDS.includes(userId)) {
+        const profile = DEMO_USER_PROFILES[userId];
+        if (!profile) {
+            throw new AppError(StatusCodes.NOT_FOUND, "Demo user profile not found");
+        }
+        userDocId = userId;
+        userName = profile.name;
+        userEmail = profile.email;
+        userPhone = profile.phone;
+        userAddress = profile.address;
+    } else {
+        const dbUser = await User.findById(userId);
+        if (!dbUser) {
+            throw new AppError(StatusCodes.NOT_FOUND, "User not found");
+        }
+        userDocId = dbUser._id.toString();
+        userName = dbUser.name;
+        userEmail = dbUser.email;
+        userPhone = dbUser.phone || "01000000000";
+        userAddress = dbUser.address || "N/A";
     }
 
     const plan = await SubscriptionPlan.findOne({ planType, isActive: true, isDeleted: false });
@@ -45,7 +80,7 @@ const initPayment = async (userId: string, planType: PlanType) => {
     }
 
     const existingPending = await Payment.findOne({
-        userId: user._id,
+        userId: userDocId,
         planType,
         status: PaymentStatus.PENDING,
     });
@@ -61,7 +96,7 @@ const initPayment = async (userId: string, planType: PlanType) => {
     const endDate = new Date(now.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
 
     const payment = await Payment.create({
-        userId: user._id,
+        userId: userDocId,
         paymentId,
         planType: plan.planType,
         amount: plan.price,
@@ -83,15 +118,15 @@ const initPayment = async (userId: string, planType: PlanType) => {
         product_name: plan.name,
         product_category: "Subscription",
         product_profile: "general",
-        cus_name: user.name,
-        cus_email: user.email,
-        cus_add1: user.address || "N/A",
+        cus_name: userName,
+        cus_email: userEmail,
+        cus_add1: userAddress,
         cus_city: "Dhaka",
         cus_postcode: "1000",
         cus_country: "Bangladesh",
-        cus_phone: user.phone || "01000000000",
-        ship_name: user.name,
-        ship_add1: user.address || "N/A",
+        cus_phone: userPhone,
+        ship_name: userName,
+        ship_add1: userAddress,
         ship_city: "Dhaka",
         ship_postcode: "1000",
         ship_country: "Bangladesh",
@@ -344,6 +379,17 @@ const getPaymentHistory = async (userId: string, query: Record<string, string>) 
 };
 
 const getSubscriptionStatus = async (userId: string) => {
+    // Handle demo users — derive subscription status from actual Payment records
+    if (DEMO_USER_IDS.includes(userId)) {
+        const latestPayment = await Payment.findOne({ userId, status: PaymentStatus.SUCCESS })
+            .sort({ endDate: -1 });
+        return {
+            isSubscribed: !!latestPayment,
+            expiryDate: latestPayment?.endDate || null,
+            latestPayment: latestPayment || null,
+        };
+    }
+
     const user = await User.findById(userId).select("subscription");
     if (!user) {
         throw new AppError(StatusCodes.NOT_FOUND, "User not found");

@@ -69,7 +69,7 @@ export const demoLogin = async (role: string) => {
             phone: undefined,
             address: undefined,
             isVerified: true,
-            subscription: { isSubscribed: normalizedRole === 'DRIVER' },
+            subscription: { isSubscribed: false },
             vehicleType: normalizedRole === 'DRIVER' ? 'car' : undefined,
         },
         accessToken: tokens.accessToken,
